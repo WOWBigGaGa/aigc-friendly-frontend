@@ -39,8 +39,8 @@ export function SandboxPlaygroundPage() {
       />
 
       <Alert
-        message="这个页面只服务视觉和 token 调试，确认有价值后应重建为 Lab 或整理进正式 owner。"
         showIcon
+        title="这个页面只服务视觉和 token 调试，确认有价值后应重建为 Lab 或整理进正式 owner。"
         type="info"
       />
 

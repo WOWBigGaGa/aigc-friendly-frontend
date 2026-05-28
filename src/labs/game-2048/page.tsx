@@ -252,8 +252,8 @@ export function Game2048LabPage() {
       />
 
       <Alert
-        message="方向键、WASD 或按钮都可以移动方块；状态只保存在当前页面。"
         showIcon
+        title="方向键、WASD 或按钮都可以移动方块；状态只保存在当前页面。"
         type={gameOver ? 'warning' : reachedTarget ? 'success' : 'info'}
       />
 
@@ -325,8 +325,8 @@ export function Game2048LabPage() {
 
           {gameOver || reachedTarget ? (
             <Alert
-              message={gameOver ? '没有可移动的格子了。' : '已经合成 2048。'}
               showIcon
+              title={gameOver ? '没有可移动的格子了。' : '已经合成 2048。'}
               type={gameOver ? 'warning' : 'success'}
             />
           ) : null}
