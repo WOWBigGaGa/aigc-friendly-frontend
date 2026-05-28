@@ -1,6 +1,7 @@
 // src/widgets/aigc-sidecar/index.tsx
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { StarFilled } from '@ant-design/icons';
 import { Bubble, Sender } from '@ant-design/x';
 import { Button, Card, Divider, Drawer, Typography } from 'antd';
 
@@ -26,9 +27,7 @@ function createMessageId() {
 function EntryAccentGlyph() {
   return (
     <span aria-hidden="true" className="entry-accent-glyph">
-      <span aria-hidden="true" role="img">
-        ✨
-      </span>
+      <StarFilled />
     </span>
   );
 }
@@ -156,10 +155,6 @@ export function AigcSidecar({ onClose, onNavigate, open, routeCandidates }: Aigc
                         <Card
                           hoverable
                           size="small"
-                          style={{
-                            borderColor: 'var(--ant-color-border-secondary)',
-                            boxShadow: 'none',
-                          }}
                           onClick={() => {
                             onNavigate(suggestion.path);
                           }}
@@ -201,10 +196,7 @@ export function AigcSidecar({ onClose, onNavigate, open, routeCandidates }: Aigc
           </div>
         </div>
 
-        <div
-          className="sidecar-input-shell border border-border bg-bg-container shadow-card"
-          ref={senderHostRef}
-        >
+        <div className="sidecar-input-shell" ref={senderHostRef}>
           <Sender
             onChange={(value) => setDraft(value)}
             onSubmit={submitPrompt}

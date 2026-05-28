@@ -158,11 +158,7 @@ export function AppLayout({ children }: AppLayoutProps = {}) {
             <div className="flex items-center gap-2">
               <EntryAccentGlyph inverse />
               <span>AI</span>
-              {showShortcutHint ? (
-                <span className="entry-trigger-shortcut rounded-full px-2 py-0.5 text-xs">
-                  Alt+K
-                </span>
-              ) : null}
+              {showShortcutHint ? <span className="entry-trigger-shortcut">Alt+K</span> : null}
             </div>
           </Button>
         </div>

@@ -26,6 +26,22 @@
   --color-ai-accent-bg: color-mix(in srgb, #cc6b46 12%, var(--ant-color-bg-container, white));
   --color-ai-accent-bg-hover: color-mix(in srgb, #cc6b46 18%, var(--ant-color-bg-container, white));
   --color-ai-accent-border: color-mix(in srgb, #cc6b46 25%, var(--ant-color-border));
+  --color-ai-text: color-mix(in srgb, var(--ant-color-text) 88%, var(--color-ai-accent));
+  --color-ai-text-strong: color-mix(in srgb, var(--ant-color-text) 78%, var(--color-ai-accent));
+  --color-ai-text-secondary: color-mix(
+    in srgb,
+    var(--ant-color-text-secondary) 78%,
+    var(--color-ai-accent)
+  );
+  --color-ai-text-tertiary: color-mix(
+    in srgb,
+    var(--ant-color-text-tertiary) 70%,
+    var(--color-ai-accent)
+  );
+  --color-ai-focus-outline: color-mix(in srgb, var(--color-ai-accent) 52%, transparent);
+  --color-ai-surface-highlight: color-mix(in srgb, var(--ant-color-bg-container) 84%, white);
+  --color-ai-shadow: color-mix(in srgb, var(--color-ai-accent) 58%, black);
+  --color-ai-shadow-strong: color-mix(in srgb, var(--color-ai-accent) 70%, black);
   --z-index-main-base: 0;
   --z-index-sidecar-container: 1100;
   --shell-header-height: 64px;
@@ -43,6 +59,38 @@
   --error-block-title-font-weight: 700;
   --error-block-title-letter-spacing: 0.4em;
   --error-block-description-max-width: 26.25rem;
+}
+
+.dark {
+  --color-ai-accent: #d97955;
+  --color-ai-accent-hover: #ee8d68;
+  --color-ai-accent-bg: color-mix(
+    in srgb,
+    var(--color-ai-accent) 18%,
+    var(--ant-color-bg-container, #141414)
+  );
+  --color-ai-accent-bg-hover: color-mix(
+    in srgb,
+    var(--color-ai-accent) 26%,
+    var(--ant-color-bg-container, #141414)
+  );
+  --color-ai-accent-border: color-mix(in srgb, var(--color-ai-accent) 40%, var(--ant-color-border));
+  --color-ai-text: color-mix(in srgb, var(--ant-color-text) 90%, var(--color-ai-accent));
+  --color-ai-text-strong: color-mix(in srgb, var(--ant-color-text) 92%, var(--color-ai-accent));
+  --color-ai-text-secondary: color-mix(
+    in srgb,
+    var(--ant-color-text-secondary) 86%,
+    var(--color-ai-accent)
+  );
+  --color-ai-text-tertiary: color-mix(
+    in srgb,
+    var(--ant-color-text-tertiary) 80%,
+    var(--color-ai-accent)
+  );
+  --color-ai-focus-outline: color-mix(in srgb, var(--color-ai-accent) 62%, transparent);
+  --color-ai-surface-highlight: color-mix(in srgb, var(--color-ai-accent) 18%, transparent);
+  --color-ai-shadow: color-mix(in srgb, var(--color-ai-accent) 42%, black);
+  --color-ai-shadow-strong: color-mix(in srgb, var(--color-ai-accent) 58%, black);
 }
 
 [data-layout-surface='sidecar'] {
@@ -68,6 +116,7 @@
 }
 
 [data-layout-surface='sidecar'] .sidecar-input-shell {
+  border: 1px solid var(--ant-color-border);
   border-radius: var(--sidecar-surface-radius);
   padding: var(--sidecar-panel-padding);
 }
@@ -359,7 +408,7 @@ body {
 
 .entry-accent-glyph {
   align-items: center;
-  color: var(--ant-color-primary);
+  color: var(--color-ai-accent);
   display: inline-flex;
   flex-shrink: 0;
   font-size: 16px;
@@ -384,8 +433,16 @@ body {
   box-shadow: var(--shadow-surface);
 }
 
+.entry-trigger-shell .ant-btn:focus-visible {
+  outline-color: var(--color-ai-focus-outline);
+}
+
 .entry-trigger-shell .entry-trigger-shortcut {
   border: 1px solid var(--color-ai-accent-border);
+  border-radius: 999px;
+  font-size: var(--ant-font-size-sm);
+  line-height: 1;
+  padding: 2px 8px;
   transition:
     background-color 150ms ease,
     border-color 150ms ease,
@@ -393,15 +450,15 @@ body {
 }
 
 .entry-trigger-shell[data-entry-open='false'] .ant-btn {
-  background: var(--ant-color-primary);
-  border-color: var(--ant-color-primary);
+  background: var(--color-ai-accent);
+  border-color: var(--color-ai-accent);
   color: var(--ant-color-text-light-solid);
 }
 
 .entry-trigger-shell[data-entry-open='false'] .ant-btn:hover,
 .entry-trigger-shell[data-entry-open='false'] .ant-btn:focus-visible {
-  background: var(--ant-color-link-hover);
-  border-color: var(--ant-color-link-hover);
+  background: var(--color-ai-accent-hover);
+  border-color: var(--color-ai-accent-hover);
   color: var(--ant-color-text-light-solid);
 }
 
@@ -412,21 +469,21 @@ body {
 }
 
 .entry-trigger-shell[data-entry-open='true'] .ant-btn {
-  background: color-mix(in srgb, var(--ant-color-primary) 10%, var(--ant-color-bg-container));
-  border-color: color-mix(in srgb, var(--ant-color-primary) 22%, var(--ant-color-border));
-  color: var(--ant-color-text);
+  background: color-mix(in srgb, var(--color-ai-accent) 10%, var(--ant-color-bg-container));
+  border-color: color-mix(in srgb, var(--color-ai-accent) 22%, var(--ant-color-border));
+  color: var(--color-ai-text);
 }
 
 .entry-trigger-shell[data-entry-open='true'] .ant-btn:hover,
 .entry-trigger-shell[data-entry-open='true'] .ant-btn:focus-visible {
-  background: color-mix(in srgb, var(--ant-color-primary) 16%, var(--ant-color-bg-container));
-  border-color: color-mix(in srgb, var(--ant-color-primary) 36%, var(--ant-color-border));
-  color: var(--ant-color-text);
+  background: color-mix(in srgb, var(--color-ai-accent) 16%, var(--ant-color-bg-container));
+  border-color: color-mix(in srgb, var(--color-ai-accent) 36%, var(--ant-color-border));
+  color: var(--color-ai-text-strong);
 }
 
 .entry-trigger-shell[data-entry-open='true'] .entry-trigger-shortcut {
   background: var(--ant-color-bg-container);
-  color: var(--ant-color-text-secondary);
+  color: var(--color-ai-text-secondary);
 }
 
 .error-block-root {
@@ -493,27 +550,76 @@ body {
   margin-top: 4px;
 }
 
+.entry-sidecar-drawer .ant-drawer-content {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-ai-accent) 8%, var(--ant-color-bg-container)) 0%,
+    var(--ant-color-bg-container) 42%
+  );
+  color: var(--color-ai-text);
+}
+
 .entry-sidecar-drawer .ant-drawer-header {
-  background: color-mix(in srgb, var(--color-ai-accent-bg) 60%, var(--ant-color-bg-container));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-ai-accent) 18%, var(--ant-color-bg-container)) 0%,
+    color-mix(in srgb, var(--color-ai-accent-bg) 82%, var(--ant-color-bg-container)) 100%
+  );
+}
+
+.entry-sidecar-drawer .ant-drawer-title {
+  color: var(--color-ai-text-strong);
+}
+
+.entry-sidecar-drawer .ant-drawer-close {
+  color: var(--color-ai-accent);
+}
+
+.entry-sidecar-drawer .ant-btn:focus-visible,
+.entry-sidecar-drawer .ant-drawer-close:focus-visible {
+  outline-color: var(--color-ai-focus-outline);
+}
+
+.entry-sidecar-drawer .ant-drawer-close:hover,
+.entry-sidecar-drawer .ant-drawer-close:focus-visible {
+  background: var(--color-ai-accent-bg);
+  color: var(--color-ai-accent-hover);
 }
 
 .entry-sidecar-drawer .ant-divider-horizontal {
   border-color: var(--color-ai-accent-border);
 }
 
+.entry-sidecar-drawer .ant-typography,
+.entry-sidecar-drawer .ant-card {
+  color: var(--color-ai-text);
+}
+
+.entry-sidecar-drawer .ant-typography strong,
+.entry-sidecar-drawer .ant-card .ant-typography strong {
+  color: var(--color-ai-text-strong);
+}
+
+.entry-sidecar-drawer .ant-typography-secondary {
+  color: var(--color-ai-text-secondary);
+}
+
 .entry-sidecar-drawer .entry-sidecar-bubble-content-system {
-  background: var(--color-ai-accent-bg);
+  background: color-mix(in srgb, var(--color-ai-accent-bg) 86%, var(--ant-color-bg-container));
   border: 1px solid var(--color-ai-accent-border);
+  color: var(--color-ai-text);
 }
 
 .entry-sidecar-drawer .entry-sidecar-bubble-content-user {
-  background: var(--ant-color-fill-secondary);
-  border: 1px solid var(--ant-color-border-secondary);
+  background: color-mix(in srgb, var(--color-ai-accent) 12%, var(--ant-color-bg-container));
+  border: 1px solid color-mix(in srgb, var(--color-ai-accent) 28%, var(--ant-color-border));
+  color: var(--color-ai-text-strong);
 }
 
 .entry-sidecar-drawer .sidecar-entry-card > .ant-card {
   background: color-mix(in srgb, var(--color-ai-accent-bg) 55%, var(--ant-color-bg-container));
   border-color: var(--color-ai-accent-border);
+  box-shadow: none;
   transition:
     background-color 150ms ease,
     border-color 150ms ease,
@@ -525,17 +631,85 @@ body {
   border-color: var(--color-ai-accent);
 }
 
+.entry-sidecar-drawer .sidecar-entry-card .ant-btn-text:not(:disabled):not(.ant-btn-disabled) {
+  color: var(--color-ai-accent);
+}
+
+.entry-sidecar-drawer .sidecar-entry-card .ant-btn-text:hover,
+.entry-sidecar-drawer .sidecar-entry-card .ant-btn-text:focus-visible {
+  background: var(--color-ai-accent-bg);
+  color: var(--color-ai-accent-hover);
+}
+
 .entry-sidecar-drawer [data-layout-surface='sidecar'] .sidecar-input-shell {
-  background: color-mix(in srgb, var(--color-ai-accent-bg) 70%, var(--ant-color-bg-container));
-  border-color: var(--color-ai-accent-border);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-ai-accent) 16%, var(--ant-color-bg-container)) 0%,
+    color-mix(in srgb, var(--color-ai-accent) 8%, var(--ant-color-bg-container)) 100%
+  );
+  border-color: color-mix(in srgb, var(--color-ai-accent) 34%, var(--ant-color-border));
+  box-shadow:
+    inset 0 1px 0 var(--color-ai-surface-highlight),
+    0 14px 34px -28px var(--color-ai-shadow);
   transition:
     background-color 150ms ease,
-    border-color 150ms ease;
+    border-color 150ms ease,
+    box-shadow 150ms ease;
 }
 
 .entry-sidecar-drawer [data-layout-surface='sidecar'] .sidecar-input-shell:focus-within {
-  background: var(--color-ai-accent-bg-hover);
+  background: color-mix(in srgb, var(--color-ai-accent) 18%, var(--ant-color-bg-container));
   border-color: var(--color-ai-accent);
+  box-shadow:
+    inset 0 1px 0 var(--color-ai-surface-highlight),
+    0 18px 42px -30px var(--color-ai-shadow-strong);
+}
+
+.entry-sidecar-drawer .ant-sender-main {
+  background: color-mix(in srgb, var(--ant-color-bg-container) 84%, var(--color-ai-accent));
+  border-color: color-mix(in srgb, var(--color-ai-accent) 30%, var(--ant-color-border));
+  box-shadow: none;
+}
+
+.entry-sidecar-drawer .ant-sender-main:focus-within {
+  border-color: var(--color-ai-accent);
+}
+
+.entry-sidecar-drawer .ant-sender-input {
+  background: transparent;
+  caret-color: var(--color-ai-accent);
+  color: var(--color-ai-text);
+}
+
+.entry-sidecar-drawer .ant-sender-input::placeholder {
+  color: var(--color-ai-text-tertiary);
+}
+
+.entry-sidecar-drawer .ant-btn-primary:not(:disabled):not(.ant-btn-disabled),
+.entry-sidecar-drawer
+  .ant-btn-color-primary.ant-btn-variant-solid:not(:disabled):not(.ant-btn-disabled) {
+  background: var(--color-ai-accent);
+  border-color: var(--color-ai-accent);
+  box-shadow: 0 8px 18px -12px var(--color-ai-shadow-strong);
+  color: var(--ant-color-text-light-solid);
+}
+
+.entry-sidecar-drawer .ant-btn-primary:not(:disabled):not(.ant-btn-disabled):hover,
+.entry-sidecar-drawer .ant-btn-primary:not(:disabled):not(.ant-btn-disabled):focus-visible,
+.entry-sidecar-drawer
+  .ant-btn-color-primary.ant-btn-variant-solid:not(:disabled):not(.ant-btn-disabled):hover,
+.entry-sidecar-drawer
+  .ant-btn-color-primary.ant-btn-variant-solid:not(:disabled):not(.ant-btn-disabled):focus-visible {
+  background: var(--color-ai-accent-hover);
+  border-color: var(--color-ai-accent-hover);
+  color: var(--ant-color-text-light-solid);
+}
+
+.entry-sidecar-drawer .ant-sender-actions-btn-disabled.ant-btn-primary,
+.entry-sidecar-drawer .ant-sender-actions-btn-disabled.ant-btn-color-primary.ant-btn-variant-solid {
+  background: color-mix(in srgb, var(--color-ai-accent) 34%, var(--ant-color-bg-container));
+  border-color: transparent;
+  color: color-mix(in srgb, var(--ant-color-text-light-solid) 72%, transparent);
 }
 
 @media (max-width: 760px) {
