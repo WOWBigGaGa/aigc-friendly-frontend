@@ -5,6 +5,8 @@ import { Tag } from 'antd';
 
 import { Error403, Error404, Error500, ErrorRouteCrash } from '@/features/error-feedback';
 
+import { PageHeader } from '@/shared/ui/page-header';
+
 const errorPreviewItems = [
   {
     Component: Error404,
@@ -43,14 +45,10 @@ export function ErrorPreviewPage() {
 
   return (
     <div className="page-stack">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">错误页预览</h1>
-          <p className="page-description">
-            用来快速检查通用错误反馈页面的视觉状态，包括路由不存在、访问受限、服务异常和路由渲染异常。
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        description="用来快速检查通用错误反馈页面的视觉状态，包括路由不存在、访问受限、服务异常和路由渲染异常。"
+        title="错误页预览"
+      />
 
       <section className="error-preview" aria-label="错误页预览">
         <div className="preview-window">

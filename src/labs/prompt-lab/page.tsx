@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Alert, Card, Input, Space, Tag } from 'antd';
 
+import { PageHeader } from '@/shared/ui/page-header';
+
 import { promptLabMeta } from './meta';
 
 export function PromptLabPage() {
@@ -10,16 +12,16 @@ export function PromptLabPage() {
 
   return (
     <div className="page-stack">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">{promptLabMeta.name}</h1>
-          <p className="page-description">{promptLabMeta.description}</p>
-        </div>
-        <Space>
-          <Tag>实验区</Tag>
-          <Tag>dev/test</Tag>
-        </Space>
-      </div>
+      <PageHeader
+        description={promptLabMeta.description}
+        extra={
+          <Space>
+            <Tag>实验区</Tag>
+            <Tag>dev/test</Tag>
+          </Space>
+        }
+        title={promptLabMeta.name}
+      />
 
       <Alert message="这个实验保持本地化，并通过环境暴露规则受控开放。" showIcon type="info" />
 

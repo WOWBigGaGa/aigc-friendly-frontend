@@ -43,6 +43,7 @@ Use public barrels for cross-module imports, for example `@/features/local-assis
 - No Tailwind `className` on Ant Design or Ant Design X component bodies.
 - Put Tailwind classes on wrapper elements.
 - Colors, radius, shadow, and z-index should use Ant Design tokens or CSS variables.
+- Do not add raw hex/rgb/hsl colors outside documented theme tokens; read `docs/ui-design/colors.md`.
 - Dark mode uses `.dark`.
 - Main app paths must work without the AI sidecar.
 

@@ -4,6 +4,7 @@ import { Button, Card, Descriptions, Tag } from 'antd';
 import { useNavigate } from 'react-router';
 
 import { getAppEnv, getGraphQLEndpoint, getHealthEndpoint } from '@/shared/env';
+import { PageHeader } from '@/shared/ui/page-header';
 
 const workflowCards = [
   {
@@ -11,11 +12,11 @@ const workflowCards = [
     title: '应用壳层',
   },
   {
-    description: '新增能力先找最小归属模块，跨模块引用走公开出口。',
-    title: '分层所有权',
+    description: '新增 Stable 能力先找最小归属模块，跨模块引用走公开出口。',
+    title: '模块归属',
   },
   {
-    description: '实验区与沙盒用来承接可控实验和一次性试验，避免污染正式区。',
+    description: '新功能先在 Lab 落地观察，Sandbox 承接一次性试验，避免污染正式区。',
     title: '实验路径',
   },
 ];
@@ -26,18 +27,10 @@ export function HomePage() {
 
   return (
     <div className="page-stack">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">AIGC 工作台</h1>
-          <p className="page-description">
-            一个小而清晰的 AI 友好前端基线。应用壳层、AI 侧栏、路由目录、GraphQL
-            入口和实验通道已经分离，方便后续稳定扩展。
-          </p>
-        </div>
-        <Button type="primary" onClick={() => navigate('/project-structure')}>
-          查看项目结构
-        </Button>
-      </div>
+      <PageHeader
+        description={<>一个小而清晰的 AI 友好前端基线，方便后续稳定扩展。</>}
+        title="AIGC 工作台"
+      />
 
       <div className="surface-panel">
         <Descriptions
@@ -62,6 +55,11 @@ export function HomePage() {
           ]}
           size="small"
         />
+        <div className="page-action-row">
+          <Button type="primary" onClick={() => navigate('/project-structure')}>
+            查看项目结构
+          </Button>
+        </div>
       </div>
 
       <section className="card-grid" aria-label="工作流切片">

@@ -2,6 +2,8 @@
 
 import { theme as antdTheme, type ThemeConfig } from 'antd';
 
+export const APP_THEME_CSS_VAR_KEY = 'app-theme';
+
 type AppThemeConfigInput = {
   fontSize: number;
   isDark: boolean;
@@ -10,7 +12,9 @@ type AppThemeConfigInput = {
 export function createAppThemeConfig({ fontSize, isDark }: AppThemeConfigInput): ThemeConfig {
   return {
     algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
-    cssVar: {},
+    cssVar: {
+      key: APP_THEME_CSS_VAR_KEY,
+    },
     token: {
       borderRadius: 8,
       borderRadiusLG: 10,

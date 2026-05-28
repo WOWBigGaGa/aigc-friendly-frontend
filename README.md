@@ -6,6 +6,7 @@
 
 For AI / Agent：先阅读 [docs/README.md](./docs/README.md)，再添加或调整代码。
 如果改动涉及页面、组件或样式，还必须阅读 [docs/ui-design/README.md](./docs/ui-design/README.md)。
+如果改动涉及颜色，还必须阅读 [docs/ui-design/colors.md](./docs/ui-design/colors.md)。
 
 `aigc-friendly-frontend` 是一个可以独立运行和独立演进的 AIGC-friendly React 前端基线项目。
 它也可以作为 [AIGC Friendly Backend](https://github.com/yoyobq/aigc-friendly-backend) 的配套前端起点。
@@ -123,8 +124,9 @@ src/
 ## 视觉规则
 
 前端不只要求功能可用，也要求页面结构、信息层级、交互反馈和深色模式保持一致。
-涉及 UI 的改动先阅读 [docs/ui-design/README.md](./docs/ui-design/README.md) 和
-[docs/ui-design/ai-rules.md](./docs/ui-design/ai-rules.md)。
+涉及 UI 的改动先阅读 [docs/ui-design/README.md](./docs/ui-design/README.md)、
+[docs/ui-design/ai-rules.md](./docs/ui-design/ai-rules.md) 和
+[docs/ui-design/colors.md](./docs/ui-design/colors.md)。
 
 ## 可选后端配套
 

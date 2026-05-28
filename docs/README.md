@@ -21,6 +21,7 @@ Topic references:
 - [layout.md](./layout.md)
 - [navigation.md](./navigation.md)
 - [ui-design/ai-rules.md](./ui-design/ai-rules.md)
+- [ui-design/colors.md](./ui-design/colors.md)
 - [labs-rules.md](./labs-rules.md)
 - [sandbox-rules.md](./sandbox-rules.md)
 - [testing.md](./testing.md)

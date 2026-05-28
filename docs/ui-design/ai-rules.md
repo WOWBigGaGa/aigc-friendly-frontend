@@ -12,9 +12,13 @@
 
 ## 颜色与 Token
 
+- 颜色边界先读 [colors.md](./colors.md)，不要凭局部页面观感临时发明色值。
 - 不在 JSX `className` 中写十六进制、`rgb()`、`hsl()` 等魔法色值。
+- 不在局部 CSS、inline style 或组件封装里写十六进制、`rgb()`、`hsl()` 等硬色值。
 - wrapper 颜色优先使用 Tailwind 语义类，例如 `bg-bg-container`、`text-text-secondary`、`border-border`、`bg-fill-secondary`。
 - Ant Design 组件颜色优先通过组件 API、状态 prop、`ConfigProvider` token 或 CSS 变量解决。
+- 原生 wrapper 使用 `--ant-color-*` 前，确认它位于 `app-shell app-theme` 下；样式不可见时先查 cssVar 继承，不要先补硬色值。
+- AI 强调色只用于 AI 入口、AI sidecar 和 AI 交互区，不扩散到普通页面标题、导航或非 AI 业务按钮。
 - 错误、警告、成功、信息状态优先使用 Ant Design 的 `Alert`、`Result`、`Tag`、`Badge`、`message` 等组件表达。
 - 深色模式不在组件局部硬编码另一套颜色；优先让 Ant Design token 和 `.dark` 语义变量接管。
 

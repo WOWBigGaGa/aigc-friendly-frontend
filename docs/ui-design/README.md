@@ -22,11 +22,13 @@
 - AI 交互 UI 优先使用 Ant Design X，并与普通业务 UI 保持视觉层级区分。
 - Tailwind 只放在 wrapper、布局壳和原生 HTML 上。
 - 颜色、圆角、阴影和层级优先消费 `src/index.css` 暴露的语义变量，或 Ant Design token。
+- 新增颜色必须遵守 [colors.md](./colors.md)，不得在页面或局部组件里写临时硬色值。
 - 页面应保持清楚的信息层级、稳定的间距节奏、可感知的交互反馈，并避免文字或控件重叠。
 - 深色模式由 Ant Design theme algorithm 与 `.dark` 语义变量共同承担，不在局部组件里手写暗色魔法值。
 
 ## 文件索引
 
 - [ai-rules.md](./ai-rules.md)：AI 生成或调整 UI 时必须优先遵守的视觉约束。
+- [colors.md](./colors.md)：颜色 token、AI 强调色、状态色和硬色值边界。
 - [../ui-stack-rules.md](../ui-stack-rules.md)：UI 技术栈职责边界。
 - [../layout.md](../layout.md)：页面骨架、主内容区和 sidecar 布局规则。

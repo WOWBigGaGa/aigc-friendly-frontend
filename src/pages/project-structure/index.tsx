@@ -2,6 +2,8 @@
 
 import { Card, Timeline } from 'antd';
 
+import { PageHeader } from '@/shared/ui/page-header';
+
 const layerItems = [
   {
     children: 'app：路由、Provider、应用壳层与导航事实源',
@@ -43,14 +45,10 @@ const promotionCards = [
 export function ProjectStructurePage() {
   return (
     <div className="page-stack">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">项目结构</h1>
-          <p className="page-description">
-            这里保留足够的结构，让 AI agent 能正确放置改动，同时不引入具体产品域。
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        description="这里保留足够的结构，让 AI agent 能正确放置改动，同时不引入具体产品域。"
+        title="项目结构"
+      />
 
       <div className="surface-panel">
         <Timeline items={layerItems} />

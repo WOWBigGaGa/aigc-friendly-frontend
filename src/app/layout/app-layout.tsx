@@ -8,6 +8,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router';
 
 import { getNavigationItems } from '@/app/navigation';
 import { FONT_SCALE_OPTIONS, useTheme } from '@/app/providers';
+import { APP_THEME_CSS_VAR_KEY } from '@/app/theme';
 
 import { AigcSidecar } from '@/widgets/aigc-sidecar';
 
@@ -102,7 +103,7 @@ export function AppLayout({ children }: AppLayoutProps = {}) {
   }, []);
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${APP_THEME_CSS_VAR_KEY}`}>
       <header className="app-header">
         <div className="flex min-w-0 items-center">
           <img alt="" className="brand-logo" src="/logo.svg" />

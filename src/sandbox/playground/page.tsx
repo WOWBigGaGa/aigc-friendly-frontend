@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Card, Segmented, Tag } from 'antd';
 
+import { PageHeader } from '@/shared/ui/page-header';
+
 const DENSITY_OPTIONS = [
   { label: '紧凑', value: 'compact' },
   { label: '均衡', value: 'balanced' },
@@ -15,15 +17,11 @@ export function SandboxPlaygroundPage() {
 
   return (
     <div className="page-stack">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">沙盒试验场</h1>
-          <p className="page-description">
-            这里用于一次性交互验证。只有确认值得观察后，才会重建为 labs 或整理进 stable。
-          </p>
-        </div>
-        <Tag>沙盒</Tag>
-      </div>
+      <PageHeader
+        description="这里用于一次性交互验证。只有确认值得观察后，才会重建为 labs 或整理进 stable。"
+        extra={<Tag>沙盒</Tag>}
+        title="沙盒试验场"
+      />
 
       <Card title="密度试验">
         <div className="flex flex-col gap-4">
