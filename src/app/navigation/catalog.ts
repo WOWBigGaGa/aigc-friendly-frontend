@@ -28,12 +28,12 @@ const LAB_NAVIGATION_ITEMS: NavigationItem[] = [
 
 const SANDBOX_NAVIGATION_ITEMS: NavigationItem[] = [
   {
-    description: '用于一次性交互验证的开发试验场。',
+    description: '用于一次性检查主题 token 的开发试验台。',
     id: 'sandbox-playground',
     kind: 'sandbox',
     label: 'Sandbox',
     path: '/sandbox/playground',
-    tags: ['sandbox', 'prototype', 'playground', '沙盒', '原型'],
+    tags: ['sandbox', 'prototype', 'playground', 'token', 'theme', '沙盒', '主题'],
   },
 ];
 

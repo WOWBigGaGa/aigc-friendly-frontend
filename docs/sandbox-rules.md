@@ -18,7 +18,7 @@
 
 - 仅 `dev / test` 可见；生产不暴露
 - 不进入 `prod`
-- 不进入独立正式菜单；当前 `/sandbox/playground` 在 dev / test 导航中合并进 Labs 分组
+- 不进入独立正式菜单；当前 `/sandbox/playground` 在 dev / test 导航中作为 Sandbox 入口暴露
 - 尽量自包含
 - 不要求复制正式区分层
 

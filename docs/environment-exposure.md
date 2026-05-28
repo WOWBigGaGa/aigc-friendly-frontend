@@ -71,7 +71,7 @@
 - `stable` 与 `labs` 不得依赖 `sandbox` 实现
 - 有价值的 `sandbox` 原型应重建为 `labs` 或整理后迁入 `stable`，不是原地毕业
 
-当前仓库的 `/sandbox/playground` 仅在 dev/test 暴露；生产环境入口不可见，直达路由也会被 guard 挡回首页。
+当前仓库的 `/sandbox/playground` 是主题 token 调试台，仅在 dev/test 暴露；生产环境入口不可见，直达路由也会被 guard 挡回首页。
 
 ## Router 例外
 
