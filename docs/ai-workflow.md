@@ -75,4 +75,4 @@
 ## 当前提示
 
 - 若任务涉及 `app / pages / widgets / features / entities / shared` 的细分职责归属，直接查看 [layer-model.md](./layer-model.md)
-- `open-decisions.md` 只用于真正的开放项与已知限制，不作为结构规则主入口
+- decision record 只用于已确认的边界案例与背景决策，不作为结构规则主入口

@@ -23,8 +23,8 @@
 
 本分支明确不保留：
 
-- 旧项目里的具体 upstream query/mutation
-- 教师、教务、学校或其他具体业务接口
+- 具体 upstream query/mutation
+- 具体业务目录、查询或流程接口
 - 接口载荷加密、解密、调试或 payload crypto 工具
 - 把 upstream token 并入本站 auth session 的做法
 - 把 upstream 用户名、密码或 token 默认交给本站后端持久化保存的做法
@@ -74,6 +74,6 @@
 
 - 复用 `entities/upstream-access` 管 token 生命周期
 - 不在 entity 内新增具体 upstream 业务接口
-- 不新增 payload crypto、接口载荷加解密或旧项目调试工具
+- 不新增 payload crypto、接口载荷加解密或私有调试工具
 - 具体接口先找拥有者，放在 feature/lab/sandbox 自己的 infrastructure 内
 - 若后端新增不同 token contract，只在 `entities/upstream-access` 扩展通用生命周期，不把具体业务接口带进来

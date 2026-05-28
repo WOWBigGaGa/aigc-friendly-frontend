@@ -12,6 +12,9 @@
 - 可快速验证真实效果
 - 不默认等同于正式功能
 
+环境暴露语义见 [environment-exposure.md](./environment-exposure.md)。
+当前默认：`dev / test` 可暴露，`prod` 必须显式配置 access list 后才允许受控暴露。
+
 ## 基本要求
 
 - 必须有 `access list`
@@ -77,6 +80,7 @@ src/labs/<lab-name>/
 - 未命中 access list 时，不得暴露入口
 - 未命中 access list 时，不得直接访问成功
 - access list 不是“只隐藏菜单”，而是实验功能的暴露控制
+- 若 `env` 不包含 `prod`，生产环境不得暴露入口，直达路由也必须被 guard 挡住
 
 ## meta.ts
 
@@ -107,9 +111,10 @@ export const demoLabMeta = {
 - `/labs/prompt-lab`
   - 用于受控验证 prompt 工作流与 AI 生成体验
   - 保持轻量实验形态，不承担正式业务入口职责
+  - 当前仅 `dev / test` 暴露，不进入 `prod`
 
 若后续新增 upstream access 相关实验页，只允许演示访问形态、token 生命周期和失败恢复；
-不得把具体 upstream 业务接口、接口载荷加解密工具或旧项目私有流程带入本分支。
+不得把具体 upstream 业务接口、接口载荷加解密工具或其他私有流程带入本分支。
 
 ## 例外声明位置
 

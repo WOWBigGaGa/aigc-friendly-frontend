@@ -22,6 +22,9 @@
 - 尽量自包含
 - 不要求复制正式区分层
 
+完整环境暴露语义见 [environment-exposure.md](./environment-exposure.md)。
+`sandbox` 可以服务测试验证，但不能因为测试可见而被解释为可生产发布。
+
 ## 自包含
 
 “自包含”的含义：

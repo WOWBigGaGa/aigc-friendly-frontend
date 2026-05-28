@@ -19,6 +19,9 @@
 - 实验代码与正式代码隔离
 - 在人工确认与监督下，实验能力可由 AI 协助整理后迁入正式区
 
+本项目的 `stable` 区借鉴 FSD 的 ownership、切片边界与依赖方向，但目标不是追求“纯粹
+FSD”。与后端一样，分层是治理工具，不是目录补齐任务。
+
 ## stable / labs / sandbox
 
 ### stable
@@ -39,7 +42,7 @@
 ### sandbox
 
 - 面向开发期快速试错
-- 仅 `dev` 可见
+- 仅 `dev / test` 可见
 - 不进入生产
 - 不纳入正式菜单
 - 主要承接临时想法、一次性原型和纯开发期验证，不应被当作常规进入 `stable` 的主路径
@@ -48,9 +51,9 @@
 
 ### sandbox
 
-- 仅 `dev` 可见
+- 仅 `dev / test` 可见
 - 不允许进入生产
-- 路由只在 `dev` 注册
+- 路由只在 `dev / test` 注册或放行
 
 ### labs
 
@@ -77,11 +80,15 @@
 - `entities`：稳定业务对象相关内容
 - `shared`：真正通用、无业务归属或业务弱相关内容
 
+这些目录表达的是职责归属和依赖方向，而不是要求每个功能都同时存在 `page / widget / feature /
+entity`。当前功能足够简单时，优先保持窄 owner 和浅结构。
+
 当前二维治理补充：
 
 - 第一维仍是 `stable / labs / sandbox` 与 `app / pages / widgets / features / entities / shared`
 - 第二维只在 `stable` 内部按需要引入，用于高复杂度稳定业务切片的职责分层
 - `labs` 与 `sandbox` 默认不采用第二维，避免把试验区过早工程化
+- `stable / labs / sandbox` 的环境暴露语义见 [environment-exposure.md](./environment-exposure.md)
 - 第二维的具体规则见 [stable-clean/architecture.md](./stable-clean/architecture.md)
 - API、storage、URL 参数、SDK、mock 等外部技术边界的收束规则，统一见 [infrastructure-rules.md](./infrastructure-rules.md)
 
