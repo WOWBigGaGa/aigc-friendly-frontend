@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { configureGraphQLRuntime, getGraphQLClient,getGraphQLRuntimeConfig } from './client';
+import { configureGraphQLRuntime, getGraphQLClient, getGraphQLRuntimeConfig } from './client';
 
 describe('GraphQL Client', () => {
   beforeEach(() => {

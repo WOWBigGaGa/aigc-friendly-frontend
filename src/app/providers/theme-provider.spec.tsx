@@ -152,17 +152,13 @@ describe('ThemeProvider', () => {
   });
 
   it('handles localStorage unavailable gracefully', () => {
-    const getItemSpy = vi
-      .spyOn(Storage.prototype, 'getItem')
-      .mockImplementation(() => {
-        throw new Error('Storage unavailable');
-      });
+    const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('Storage unavailable');
+    });
 
-    const setItemSpy = vi
-      .spyOn(Storage.prototype, 'setItem')
-      .mockImplementation(() => {
-        throw new Error('Storage unavailable');
-      });
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('Storage unavailable');
+    });
 
     expect(() => {
       render(
