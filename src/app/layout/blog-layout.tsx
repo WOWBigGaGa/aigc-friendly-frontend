@@ -1,12 +1,12 @@
-// src/app/layout/blog-layout.tsx
-
 import { useMemo, useState } from 'react';
-import { MoonOutlined, SunOutlined } from '@ant-design/icons';
+import { MenuOutlined, MoonOutlined, SunOutlined } from '@ant-design/icons';
 import { Button, Tabs } from 'antd';
 import type { ReactNode } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 
 import { useTheme } from '@/app/providers';
+
+import { BlogSidebar } from './components/blog-sidebar';
 
 type BlogLayoutProps = {
   children?: ReactNode;
@@ -22,7 +22,7 @@ export function BlogLayout({ children }: BlogLayoutProps = {}) {
   const { isDark, setIsDark } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
-  const [isSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const activeNavigationPath = useMemo(() => {
     return blogNavigationItems.find((item) => location.pathname.startsWith(item.path))?.path;
@@ -33,10 +33,17 @@ export function BlogLayout({ children }: BlogLayoutProps = {}) {
     [],
   );
 
+  const toggleSidebar = () => {
+    setIsSidebarOpen((prev) => !prev);
+  };
+
   return (
     <div className={`blog-shell ${isDark ? 'dark' : ''}`}>
       <header className="blog-header">
         <div className="blog-header-left">
+          <span className="sidebar-toggle">
+            <Button icon={<MenuOutlined />} shape="circle" type="text" onClick={toggleSidebar} />
+          </span>
           <h1 className="blog-title" onClick={() => navigate('/blog')}>
             My Blog
           </h1>
@@ -63,34 +70,7 @@ export function BlogLayout({ children }: BlogLayoutProps = {}) {
       </header>
 
       <div className="blog-content">
-        <aside className={`blog-sidebar ${isSidebarOpen ? 'open' : ''}`}>
-          {/* TODO: 后续替换为GraphQL查询获取真实分类数据 */}
-          <div className="sidebar-section">
-            <h3>分类</h3>
-            <ul className="sidebar-list">
-              <li onClick={() => navigate('/blog/category/tech')}>技术</li>
-              <li onClick={() => navigate('/blog/category/life')}>生活</li>
-              <li onClick={() => navigate('/blog/category/reading')}>阅读</li>
-            </ul>
-          </div>
-          {/* TODO: 后续替换为GraphQL查询获取真实标签数据 */}
-          <div className="sidebar-section">
-            <h3>标签</h3>
-            <ul className="sidebar-list">
-              <li onClick={() => navigate('/blog/tag/react')}>React</li>
-              <li onClick={() => navigate('/blog/tag/typescript')}>TypeScript</li>
-              <li onClick={() => navigate('/blog/tag/node')}>Node.js</li>
-            </ul>
-          </div>
-          {/* TODO: 后续替换为GraphQL查询获取真实归档数据 */}
-          <div className="sidebar-section">
-            <h3>归档</h3>
-            <ul className="sidebar-list">
-              <li onClick={() => navigate('/blog/archive/2025/01')}>2025年1月</li>
-              <li onClick={() => navigate('/blog/archive/2024/12')}>2024年12月</li>
-            </ul>
-          </div>
-        </aside>
+        <BlogSidebar isOpen={isSidebarOpen} />
 
         <main className="blog-main">{children ?? <Outlet />}</main>
       </div>

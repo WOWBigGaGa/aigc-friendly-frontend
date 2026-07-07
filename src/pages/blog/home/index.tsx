@@ -1,14 +1,17 @@
-// src/pages/blog/home/index.tsx
+import { useState } from 'react';
 
-import { Typography } from 'antd';
-
-const { Title } = Typography;
+import { ArticleList } from './components/article-list';
 
 export function BlogHomePage() {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
     <div className="blog-home">
-      <Title level={1}>博客首页</Title>
-      <p>欢迎来到我的博客！这里将展示最新的文章列表。</p>
+      <ArticleList page={currentPage} pageSize={10} onPageChange={handlePageChange} />
     </div>
   );
 }

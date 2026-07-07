@@ -2,7 +2,7 @@
 
 import '@testing-library/jest-dom/vitest';
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -62,6 +62,19 @@ describe('BlogLayout', () => {
       unobserve: vi.fn(),
       disconnect: vi.fn(),
     }));
+    window.matchMedia = vi.fn().mockImplementation(
+      (query) =>
+        ({
+          matches: false,
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        }) as unknown as MediaQueryList,
+    );
   });
 
   afterEach(() => {
@@ -86,7 +99,7 @@ describe('BlogLayout', () => {
     expect(screen.getByText('友链')).toBeInTheDocument();
   });
 
-  it('renders sidebar with categories, tags, and archives', () => {
+  it('renders sidebar with categories, tags, and archives', async () => {
     render(
       <ThemeProvider>
         <MemoryRouter initialEntries={['/blog']}>
@@ -97,16 +110,12 @@ describe('BlogLayout', () => {
       </ThemeProvider>,
     );
 
+    await waitFor(() => {
+      expect(screen.queryByText('加载中...')).not.toBeInTheDocument();
+    });
+
     expect(screen.getByText('分类')).toBeInTheDocument();
-    expect(screen.getByText('技术')).toBeInTheDocument();
-    expect(screen.getByText('生活')).toBeInTheDocument();
-    expect(screen.getByText('阅读')).toBeInTheDocument();
-
-    expect(screen.getByText('标签')).toBeInTheDocument();
-    expect(screen.getByText('React')).toBeInTheDocument();
-    expect(screen.getByText('TypeScript')).toBeInTheDocument();
-    expect(screen.getByText('Node.js')).toBeInTheDocument();
-
+    expect(screen.getByText('标签云')).toBeInTheDocument();
     expect(screen.getByText('归档')).toBeInTheDocument();
   });
 

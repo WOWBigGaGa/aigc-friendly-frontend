@@ -15,6 +15,7 @@ export const GET_ARTICLES = gql`
         viewCount
         likeCount
         publishedAt
+        isPinned
         category {
           id
           name
