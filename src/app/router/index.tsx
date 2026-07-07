@@ -8,8 +8,17 @@ import {
   useRouteError,
 } from 'react-router';
 
-import { AppLayout } from '@/app/layout';
+import { AppLayout, ArticleLayout, BlogLayout } from '@/app/layout';
 
+import {
+  BlogAboutPage,
+  BlogArchivePage,
+  BlogArticlePage,
+  BlogCategoryPage,
+  BlogHomePage,
+  BlogLinksPage,
+  BlogTagPage,
+} from '@/pages/blog';
 import { ErrorPreviewPage } from '@/pages/error-preview';
 import { HomePage } from '@/pages/home';
 import { ProjectStructurePage } from '@/pages/project-structure';
@@ -88,6 +97,46 @@ const router = createBrowserRouter([
         element: <SandboxPlaygroundPage />,
         loader: sandboxPlaygroundLoader,
         path: 'sandbox/playground',
+      },
+      {
+        children: [
+          {
+            element: <BlogHomePage />,
+            index: true,
+          },
+          {
+            element: <BlogCategoryPage />,
+            path: 'category/:slug',
+          },
+          {
+            element: <BlogTagPage />,
+            path: 'tag/:slug',
+          },
+          {
+            element: <BlogArchivePage />,
+            path: 'archive/:year/:month',
+          },
+          {
+            element: <BlogAboutPage />,
+            path: 'about',
+          },
+          {
+            element: <BlogLinksPage />,
+            path: 'links',
+          },
+        ],
+        element: <BlogLayout />,
+        path: 'blog',
+      },
+      {
+        children: [
+          {
+            element: <BlogArticlePage />,
+            path: ':id',
+          },
+        ],
+        element: <ArticleLayout />,
+        path: 'blog/article',
       },
       {
         element: <Error404 />,
