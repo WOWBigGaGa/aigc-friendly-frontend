@@ -17,6 +17,7 @@ import {
   BlogCategoryPage,
   BlogHomePage,
   BlogLinksPage,
+  BlogSearchPage,
   BlogTagPage,
 } from '@/pages/blog';
 import { ErrorPreviewPage } from '@/pages/error-preview';
@@ -123,6 +124,10 @@ const router = createBrowserRouter([
           {
             element: <BlogLinksPage />,
             path: 'links',
+          },
+          {
+            element: <BlogSearchPage />,
+            path: 'search',
           },
         ],
         element: <BlogLayout />,

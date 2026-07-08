@@ -4,7 +4,11 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GET_ADJACENT_ARTICLES, GET_ARTICLE_BY_ID, INCREMENT_VIEW_COUNT } from '@/features/blog';
+vi.mock('@/features/blog', () => ({
+  GET_ADJACENT_ARTICLES: { loc: { source: { body: 'mock adjacent query' } } },
+  GET_ARTICLE_BY_ID: { loc: { source: { body: 'mock article query' } } },
+  INCREMENT_VIEW_COUNT: { loc: { source: { body: 'mock increment view count mutation' } } },
+}));
 
 import { executeGraphQL } from '@/shared/graphql';
 
@@ -204,7 +208,7 @@ describe('ArticleDetail', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByTestId('text')).toHaveAttribute('data-loading', 'true');
+    expect(screen.getByTestId('article-loading')).toBeInTheDocument();
   });
 
   it('renders article title when loaded', async () => {

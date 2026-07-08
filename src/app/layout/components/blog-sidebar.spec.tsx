@@ -64,7 +64,7 @@ vi.mock('@ant-design/icons', () => ({
 }));
 
 vi.mock('react-router', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,
     useNavigate: () => vi.fn(),

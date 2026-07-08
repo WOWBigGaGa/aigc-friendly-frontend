@@ -1626,6 +1626,410 @@ describe('Blog Module (e2e)', () => {
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
     });
+
+    describe('Blog Search & Filter (e2e)', () => {
+      it('should search articles by title keyword', async () => {
+        const article1 = await articleRepository.create({
+          title: `${testPrefix}Search Node.js Development`,
+          content: '# Node.js Tutorial',
+          summary: 'Node.js development guide',
+          authorId: 'test-author-id',
+          status: ArticleStatus.PUBLISHED,
+          viewCount: 0,
+          likeCount: 0,
+          isPinned: false,
+          publishedAt: new Date(),
+        });
+        seededArticleIds.push(article1.id);
+
+        const article2 = await articleRepository.create({
+          title: `${testPrefix}Search React Development`,
+          content: '# React Tutorial',
+          summary: 'React development guide',
+          authorId: 'test-author-id',
+          status: ArticleStatus.PUBLISHED,
+          viewCount: 0,
+          likeCount: 0,
+          isPinned: false,
+          publishedAt: new Date(),
+        });
+        seededArticleIds.push(article2.id);
+
+        const response = await request(app.getHttpServer())
+          .post('/graphql')
+          .send({
+            query: `
+              query {
+                articles(filter: {keyword: "Node"}, pagination: {page: 1, limit: 10}) {
+                  items { id title }
+                  total
+                }
+              }
+            `,
+          });
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.articles.total).toBeGreaterThanOrEqual(1);
+        expect(
+          response.body.data.articles.items.some((item: { title: string }) =>
+            item.title.includes('Node'),
+          ),
+        ).toBe(true);
+        expect(
+          response.body.data.articles.items.every((item: { title: string }) =>
+            item.title.includes('Node'),
+          ),
+        ).toBe(true);
+      });
+
+      it('should search articles by content keyword', async () => {
+        const article = await articleRepository.create({
+          title: `${testPrefix}Content Search Test`,
+          content: '# Web Development\n\nThis article covers TypeScript programming and modern web frameworks.',
+          summary: 'Web dev content',
+          authorId: 'test-author-id',
+          status: ArticleStatus.PUBLISHED,
+          viewCount: 0,
+          likeCount: 0,
+          isPinned: false,
+          publishedAt: new Date(),
+        });
+        seededArticleIds.push(article.id);
+
+        const response = await request(app.getHttpServer())
+          .post('/graphql')
+          .send({
+            query: `
+              query {
+                articles(filter: {keyword: "TypeScript"}, pagination: {page: 1, limit: 10}) {
+                  items { id title }
+                  total
+                }
+              }
+            `,
+          });
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.articles.total).toBeGreaterThanOrEqual(1);
+      });
+
+      it('should return empty results for non-existent keyword', async () => {
+        const response = await request(app.getHttpServer())
+          .post('/graphql')
+          .send({
+            query: `
+              query {
+                articles(filter: {keyword: "nonexistent-keyword-xyz-123"}, pagination: {page: 1, limit: 10}) {
+                  items { id title }
+                  total
+                }
+              }
+            `,
+          });
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.articles.total).toBe(0);
+        expect(response.body.data.articles.items.length).toBe(0);
+      });
+
+      it('should handle empty keyword gracefully', async () => {
+        const article = await articleRepository.create({
+          title: `${testPrefix}Empty Keyword Test`,
+          content: '# Empty Keyword',
+          summary: 'Empty keyword test',
+          authorId: 'test-author-id',
+          status: ArticleStatus.PUBLISHED,
+          viewCount: 0,
+          likeCount: 0,
+          isPinned: false,
+          publishedAt: new Date(),
+        });
+        seededArticleIds.push(article.id);
+
+        const response = await request(app.getHttpServer())
+          .post('/graphql')
+          .send({
+            query: `
+              query {
+                articles(filter: {keyword: ""}, pagination: {page: 1, limit: 10}) {
+                  items { id title }
+                  total
+                }
+              }
+            `,
+          });
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.articles.total).toBeGreaterThanOrEqual(1);
+      });
+
+      it('should filter articles by category ID', async () => {
+        const category1 = await categoryRepository.create({
+          name: `${testPrefix}Category A`,
+          slug: `${testPrefix}category-a`,
+          sort: 0,
+          parentId: null,
+        });
+        seededCategoryIds.push(category1.id);
+
+        const category2 = await categoryRepository.create({
+          name: `${testPrefix}Category B`,
+          slug: `${testPrefix}category-b`,
+          sort: 1,
+          parentId: null,
+        });
+        seededCategoryIds.push(category2.id);
+
+        await articleRepository.create({
+          title: `${testPrefix}Category A Article 1`,
+          content: '# Category A',
+          summary: 'Category A article',
+          authorId: 'test-author-id',
+          status: ArticleStatus.PUBLISHED,
+          viewCount: 0,
+          likeCount: 0,
+          isPinned: false,
+          categoryId: category1.id,
+          publishedAt: new Date(),
+        }).then(a => seededArticleIds.push(a.id));
+
+        await articleRepository.create({
+          title: `${testPrefix}Category A Article 2`,
+          content: '# Category A',
+          summary: 'Category A article',
+          authorId: 'test-author-id',
+          status: ArticleStatus.PUBLISHED,
+          viewCount: 0,
+          likeCount: 0,
+          isPinned: false,
+          categoryId: category1.id,
+          publishedAt: new Date(),
+        }).then(a => seededArticleIds.push(a.id));
+
+        await articleRepository.create({
+          title: `${testPrefix}Category B Article`,
+          content: '# Category B',
+          summary: 'Category B article',
+          authorId: 'test-author-id',
+          status: ArticleStatus.PUBLISHED,
+          viewCount: 0,
+          likeCount: 0,
+          isPinned: false,
+          categoryId: category2.id,
+          publishedAt: new Date(),
+        }).then(a => seededArticleIds.push(a.id));
+
+        const response = await request(app.getHttpServer())
+          .post('/graphql')
+          .send({
+            query: `
+              query {
+                articles(filter: {categoryId: "${category1.id}"}, pagination: {page: 1, limit: 10}) {
+                  items { id title }
+                  total
+                }
+              }
+            `,
+          });
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.articles.total).toBe(2);
+        expect(
+          response.body.data.articles.items.every((item: { title: string }) =>
+            item.title.includes('Category A'),
+          ),
+        ).toBe(true);
+      });
+
+      it('should filter articles by tag IDs', async () => {
+        const tag1 = await tagRepository.create({
+          name: `${testPrefix}Tag X`,
+          slug: `${testPrefix}tag-x`,
+        });
+        seededTagIds.push(tag1.id);
+
+        const tag2 = await tagRepository.create({
+          name: `${testPrefix}Tag Y`,
+          slug: `${testPrefix}tag-y`,
+        });
+        seededTagIds.push(tag2.id);
+
+        const article1 = await articleRepository.create({
+          title: `${testPrefix}Tagged Article 1`,
+          content: '# Tagged',
+          summary: 'Tagged article',
+          authorId: 'test-author-id',
+          status: ArticleStatus.PUBLISHED,
+          viewCount: 0,
+          likeCount: 0,
+          isPinned: false,
+          publishedAt: new Date(),
+        });
+        seededArticleIds.push(article1.id);
+        await tagRepository.addTagsToArticle(article1.id, [tag1.id, tag2.id]);
+
+        const article2 = await articleRepository.create({
+          title: `${testPrefix}Tagged Article 2`,
+          content: '# Tagged',
+          summary: 'Tagged article',
+          authorId: 'test-author-id',
+          status: ArticleStatus.PUBLISHED,
+          viewCount: 0,
+          likeCount: 0,
+          isPinned: false,
+          publishedAt: new Date(),
+        });
+        seededArticleIds.push(article2.id);
+        await tagRepository.addTagsToArticle(article2.id, [tag1.id]);
+
+        const response = await request(app.getHttpServer())
+          .post('/graphql')
+          .send({
+            query: `
+              query {
+                articles(filter: {tagIds: ["${tag2.id}"]}, pagination: {page: 1, limit: 10}) {
+                  items { id title }
+                  total
+                }
+              }
+            `,
+          });
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.articles.total).toBe(1);
+        expect(response.body.data.articles.items[0].title).toBe(`${testPrefix}Tagged Article 1`);
+      });
+
+      it('should filter by pinned articles', async () => {
+        await articleRepository.create({
+          title: `${testPrefix}Pinned Article`,
+          content: '# Pinned',
+          summary: 'Pinned article',
+          authorId: 'test-author-id',
+          status: ArticleStatus.PUBLISHED,
+          viewCount: 0,
+          likeCount: 0,
+          isPinned: true,
+          publishedAt: new Date(),
+        }).then(a => seededArticleIds.push(a.id));
+
+        await articleRepository.create({
+          title: `${testPrefix}Normal Article`,
+          content: '# Normal',
+          summary: 'Normal article',
+          authorId: 'test-author-id',
+          status: ArticleStatus.PUBLISHED,
+          viewCount: 0,
+          likeCount: 0,
+          isPinned: false,
+          publishedAt: new Date(),
+        }).then(a => seededArticleIds.push(a.id));
+
+        const response = await request(app.getHttpServer())
+          .post('/graphql')
+          .send({
+            query: `
+              query {
+                articles(filter: {isPinned: true}, pagination: {page: 1, limit: 10}) {
+                  items { id title }
+                  total
+                }
+              }
+            `,
+          });
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.articles.total).toBeGreaterThanOrEqual(1);
+        expect(
+          response.body.data.articles.items.every((item: { title: string }) =>
+            item.title.includes('Pinned'),
+          ),
+        ).toBe(true);
+      });
+
+      it('should combine keyword search with category filter', async () => {
+        const category = await categoryRepository.create({
+          name: `${testPrefix}Combined Filter Category`,
+          slug: `${testPrefix}combined-filter`,
+          sort: 0,
+          parentId: null,
+        });
+        seededCategoryIds.push(category.id);
+
+        await articleRepository.create({
+          title: `${testPrefix}Combined Node.js`,
+          content: '# Node.js',
+          summary: 'Node.js in category',
+          authorId: 'test-author-id',
+          status: ArticleStatus.PUBLISHED,
+          viewCount: 0,
+          likeCount: 0,
+          isPinned: false,
+          categoryId: category.id,
+          publishedAt: new Date(),
+        }).then(a => seededArticleIds.push(a.id));
+
+        await articleRepository.create({
+          title: `${testPrefix}Combined React`,
+          content: '# React',
+          summary: 'React in category',
+          authorId: 'test-author-id',
+          status: ArticleStatus.PUBLISHED,
+          viewCount: 0,
+          likeCount: 0,
+          isPinned: false,
+          categoryId: category.id,
+          publishedAt: new Date(),
+        }).then(a => seededArticleIds.push(a.id));
+
+        await articleRepository.create({
+          title: `${testPrefix}Combined Node.js Outside`,
+          content: '# Node.js',
+          summary: 'Node.js outside category',
+          authorId: 'test-author-id',
+          status: ArticleStatus.PUBLISHED,
+          viewCount: 0,
+          likeCount: 0,
+          isPinned: false,
+          publishedAt: new Date(),
+        }).then(a => seededArticleIds.push(a.id));
+
+        const response = await request(app.getHttpServer())
+          .post('/graphql')
+          .send({
+            query: `
+              query {
+                articles(filter: {keyword: "Node", categoryId: "${category.id}"}, pagination: {page: 1, limit: 10}) {
+                  items { id title }
+                  total
+                }
+              }
+            `,
+          });
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.articles.total).toBe(1);
+        expect(response.body.data.articles.items[0].title).toBe(`${testPrefix}Combined Node.js`);
+      });
+
+      it('should return error for invalid category ID', async () => {
+        const response = await request(app.getHttpServer())
+          .post('/graphql')
+          .send({
+            query: `
+              query {
+                articles(filter: {categoryId: "invalid-category-id"}, pagination: {page: 1, limit: 10}) {
+                  items { id title }
+                  total
+                }
+              }
+            `,
+          });
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.articles.total).toBe(0);
+      });
+    });
   });
 
   async function cleanupSeededData(): Promise<void> {

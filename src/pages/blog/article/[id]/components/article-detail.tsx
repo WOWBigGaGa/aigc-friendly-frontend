@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { ClockCircleOutlined, EyeOutlined, HeartOutlined } from '@ant-design/icons';
-import { Anchor, Divider, Tag, Typography } from 'antd';
+import { Divider, Spin, Tag, Typography } from 'antd';
 import ReactMarkdown from 'react-markdown';
 
 import { GET_ADJACENT_ARTICLES, GET_ARTICLE_BY_ID, INCREMENT_VIEW_COUNT } from '@/features/blog';
 
 import { executeGraphQL } from '@/shared/graphql';
 
-const { Title, Text, Paragraph } = Typography;
-const { Link } = Anchor;
+const { Title, Paragraph } = Typography;
 
 interface Category {
   id: string;
@@ -90,10 +89,9 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
 
         const [articleResult, adjacentResult] = await Promise.all([
           executeGraphQL<{ article: Article }, { id: string }>(queryBody, { id: articleId }),
-          executeGraphQL<
-            { adjacentArticles: AdjacentArticles },
-            { id: string }
-          >(adjacentBody, { id: articleId }),
+          executeGraphQL<{ adjacentArticles: AdjacentArticles }, { id: string }>(adjacentBody, {
+            id: articleId,
+          }),
         ]);
 
         setArticle(articleResult.article);
@@ -176,15 +174,23 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
 
   if (loading) {
     return (
-      <div data-testid="article-loading" className="article-loading" style={{ textAlign: 'center', padding: '40px' }}>
-        <Text loading>加载中...</Text>
+      <div
+        data-testid="article-loading"
+        className="article-loading"
+        style={{ textAlign: 'center', padding: '40px' }}
+      >
+        <Spin size="large" />
       </div>
     );
   }
 
   if (error || !article) {
     return (
-      <div data-testid="article-error" className="article-error" style={{ textAlign: 'center', padding: '40px' }}>
+      <div
+        data-testid="article-error"
+        className="article-error"
+        style={{ textAlign: 'center', padding: '40px' }}
+      >
         <Title level={2}>文章加载失败</Title>
         <Paragraph>文章不存在或加载出错，请稍后重试。</Paragraph>
       </div>
@@ -279,15 +285,18 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
               <Title level={4} style={{ marginBottom: '16px' }}>
                 文章目录
               </Title>
-              <Anchor affix={false}>
+              <div data-testid="anchor">
                 {headings.map((heading) => (
-                  <Link
+                  <a
                     key={heading.id}
                     href={`#${heading.id}`}
                     onClick={handleHeadingClick}
-                    className={activeHeading === heading.id ? 'active' : ''}
+                    className={`ant-anchor-link ${activeHeading === heading.id ? 'active' : ''}`}
+                    data-testid="anchor-link"
                     style={{
+                      display: 'block',
                       fontSize: heading.level === 2 ? '14px' : '13px',
+                      padding: '4px 0',
                       paddingLeft:
                         heading.level === 3 ? '12px' : heading.level === 4 ? '24px' : '0',
                       fontWeight: activeHeading === heading.id ? '600' : '400',
@@ -295,12 +304,13 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
                         activeHeading === heading.id
                           ? 'var(--ant-color-primary)'
                           : 'var(--ant-color-text-secondary)',
+                      textDecoration: 'none',
                     }}
                   >
                     {heading.text}
-                  </Link>
+                  </a>
                 ))}
-              </Anchor>
+              </div>
             </aside>
           )}
 
