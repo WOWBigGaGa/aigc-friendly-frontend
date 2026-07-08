@@ -86,24 +86,19 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
       setError(null);
       try {
         const queryBody = GET_ARTICLE_BY_ID.loc?.source?.body ?? '';
-        const result = await executeGraphQL<{ article: Article }, { id: string }>(queryBody, {
-          id: articleId,
-        });
-        setArticle(result.article);
-
         const adjacentBody = GET_ADJACENT_ARTICLES.loc?.source?.body ?? '';
-        const adjacentResult = await executeGraphQL<
-          { adjacentArticles: AdjacentArticles },
-          { id: string }
-        >(adjacentBody, { id: articleId });
+
+        const [articleResult, adjacentResult] = await Promise.all([
+          executeGraphQL<{ article: Article }, { id: string }>(queryBody, { id: articleId }),
+          executeGraphQL<
+            { adjacentArticles: AdjacentArticles },
+            { id: string }
+          >(adjacentBody, { id: articleId }),
+        ]);
+
+        setArticle(articleResult.article);
         setAdjacentArticles(adjacentResult.adjacentArticles);
-
-        extractHeadings(result.article.content);
-
-        const mutationBody = INCREMENT_VIEW_COUNT.loc?.source?.body ?? '';
-        await executeGraphQL<{ incrementViewCount: Article }, { id: string }>(mutationBody, {
-          id: articleId,
-        });
+        extractHeadings(articleResult.article.content);
       } catch (err) {
         setError(err as Error);
       } finally {
@@ -111,7 +106,19 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
       }
     };
 
+    const incrementViewCount = async () => {
+      try {
+        const mutationBody = INCREMENT_VIEW_COUNT.loc?.source?.body ?? '';
+        await executeGraphQL<{ incrementViewCount: Article }, { id: string }>(mutationBody, {
+          id: articleId,
+        });
+      } catch {
+        console.warn('Failed to increment view count');
+      }
+    };
+
     fetchArticle();
+    incrementViewCount();
   }, [articleId]);
 
   useEffect(() => {

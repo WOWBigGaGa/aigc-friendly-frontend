@@ -437,7 +437,7 @@ describe('ArticleDetail', () => {
     expect(screen.getByText('文章加载失败')).toBeInTheDocument();
   });
 
-  it('renders error state when increment view count fails', async () => {
+  it('does not render error state when increment view count fails', async () => {
     vi.mocked(executeGraphQL)
       .mockResolvedValueOnce({ article: createArticle() })
       .mockResolvedValueOnce({ adjacentArticles: createAdjacentArticles() })
@@ -449,11 +449,10 @@ describe('ArticleDetail', () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.queryByTestId('article-error')).toBeInTheDocument();
-    });
+    await screen.findAllByTestId('title');
 
-    expect(screen.getByText('文章加载失败')).toBeInTheDocument();
+    expect(screen.queryByTestId('article-error')).not.toBeInTheDocument();
+    expect(screen.getByText('Test Article')).toBeInTheDocument();
   });
 
   it('renders view count and like count', async () => {
@@ -533,8 +532,11 @@ describe('ArticleDetail', () => {
     document.body.removeChild(headingElement);
   });
 
-  it('does not call incrementViewCount when article fetch fails', async () => {
-    vi.mocked(executeGraphQL).mockRejectedValueOnce(new Error('Network error'));
+  it('calls incrementViewCount even when article fetch fails', async () => {
+    vi.mocked(executeGraphQL)
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValueOnce({ incrementViewCount: createArticle() });
 
     render(
       <MemoryRouter>
@@ -546,8 +548,8 @@ describe('ArticleDetail', () => {
       expect(screen.queryByTestId('article-error')).toBeInTheDocument();
     });
 
-    expect(executeGraphQL).toHaveBeenCalledTimes(1);
-    expect(executeGraphQL).not.toHaveBeenCalledWith('mock increment view count mutation', {
+    expect(executeGraphQL).toHaveBeenCalledTimes(3);
+    expect(executeGraphQL).toHaveBeenCalledWith('mock increment view count mutation', {
       id: 'article-1',
     });
   });
