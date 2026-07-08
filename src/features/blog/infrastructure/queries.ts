@@ -170,3 +170,20 @@ export const GET_ARCHIVES = gql`
     }
   }
 `;
+
+export const GET_ADJACENT_ARTICLES = gql`
+  query GetAdjacentArticles($id: ID!) {
+    adjacentArticles(id: $id) {
+      prev {
+        id
+        title
+        slug
+      }
+      next {
+        id
+        title
+        slug
+      }
+    }
+  }
+`;

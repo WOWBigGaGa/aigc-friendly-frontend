@@ -1,17 +1,18 @@
-// src/pages/blog/article/[id]/index.tsx
-
-import { Typography } from 'antd';
 import { useParams } from 'react-router';
 
-const { Title } = Typography;
+import { ArticleDetail } from './components/article-detail';
 
 export function BlogArticlePage() {
   const { id } = useParams<{ id: string }>();
 
-  return (
-    <div className="blog-article">
-      <Title level={1}>文章详情 - {id}</Title>
-      <p>这是文章 {id} 的详情页面。</p>
-    </div>
-  );
+  if (!id) {
+    return (
+      <div style={{ textAlign: 'center', padding: '40px' }}>
+        <h1>文章不存在</h1>
+        <p>请提供有效的文章 ID</p>
+      </div>
+    );
+  }
+
+  return <ArticleDetail articleId={id} />;
 }
