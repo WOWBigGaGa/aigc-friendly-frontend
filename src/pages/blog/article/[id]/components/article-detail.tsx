@@ -3,9 +3,18 @@ import { ClockCircleOutlined, EyeOutlined, HeartOutlined } from '@ant-design/ico
 import { Divider, Spin, Tag, Typography } from 'antd';
 import ReactMarkdown from 'react-markdown';
 
-import { GET_ADJACENT_ARTICLES, GET_ARTICLE_BY_ID, INCREMENT_VIEW_COUNT } from '@/features/blog';
+import {
+  GET_ADJACENT_ARTICLES,
+  GET_ARTICLE_BY_ID,
+  GET_COMMENTS,
+  INCREMENT_LIKE_COUNT,
+  INCREMENT_VIEW_COUNT,
+} from '@/features/blog';
 
 import { executeGraphQL } from '@/shared/graphql';
+
+import { CommentForm } from './comment-form';
+import { CommentList } from './comment-list';
 
 const { Title, Paragraph } = Typography;
 
@@ -51,6 +60,24 @@ interface Heading {
   level: number;
 }
 
+interface Comment {
+  id: string;
+  articleId: string;
+  authorName: string;
+  authorEmail: string;
+  authorAvatar: string;
+  content: string;
+  parentId: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ParentComment {
+  id: string;
+  authorName: string;
+}
+
 export function ArticleDetail({ articleId }: { articleId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -58,6 +85,10 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
   const [adjacentArticles, setAdjacentArticles] = useState<AdjacentArticles | null>(null);
   const [headings, setHeadings] = useState<Heading[]>([]);
   const [activeHeading, setActiveHeading] = useState<string>('');
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsError, setCommentsError] = useState<Error | null>(null);
+  const [parentComment, setParentComment] = useState<ParentComment | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
@@ -120,6 +151,36 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
   }, [articleId]);
 
   useEffect(() => {
+    fetchComments();
+  }, [articleId]);
+
+  const fetchComments = async () => {
+    setCommentsLoading(true);
+    setCommentsError(null);
+    try {
+      const queryBody = GET_COMMENTS.loc?.source?.body ?? '';
+      const result = await executeGraphQL<
+        { comments: { items: Comment[] } },
+        { articleId: string; page: number; pageSize: number }
+      >(queryBody, { articleId, page: 1, pageSize: 50 });
+      setComments(result.comments.items);
+    } catch (err) {
+      setCommentsError(err as Error);
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  const handleReply = (comment: Comment) => {
+    setParentComment({ id: comment.id, authorName: comment.authorName });
+  };
+
+  const handleCommentSubmit = () => {
+    setParentComment(null);
+    fetchComments();
+  };
+
+  useEffect(() => {
     if (!contentRef.current || headings.length === 0) return;
 
     const headingElements = headings
@@ -164,6 +225,22 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
       if (element) {
         element.scrollIntoView({ behavior: 'smooth' });
       }
+    }
+  };
+
+  const handleLike = async () => {
+    try {
+      const mutationBody = INCREMENT_LIKE_COUNT.loc?.source?.body ?? '';
+      const result = await executeGraphQL<{ incrementLikeCount: Article }, { id: string }>(
+        mutationBody,
+        { id: articleId },
+      );
+      setArticle({
+        ...article!,
+        likeCount: result.incrementLikeCount.likeCount,
+      });
+    } catch (err) {
+      console.warn('Failed to increment like count');
     }
   };
 
@@ -259,7 +336,9 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
                 gap: '4px',
                 fontSize: '14px',
                 color: 'var(--ant-color-text-secondary)',
+                cursor: 'pointer',
               }}
+              onClick={handleLike}
             >
               <HeartOutlined />
               {article.likeCount}
@@ -554,6 +633,39 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
             </div>
           )}
         </nav>
+
+        <Divider />
+
+        <section style={{ marginTop: '32px' }}>
+          <Title level={2} style={{ marginBottom: '24px' }}>
+            评论 ({comments.length})
+          </Title>
+
+          {commentsLoading ? (
+            <div style={{ textAlign: 'center', padding: '20px' }}>
+              <Spin />
+            </div>
+          ) : commentsError ? (
+            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--ant-color-error)' }}>
+              评论加载失败，请稍后重试
+            </div>
+          ) : (
+            <>
+              <CommentList comments={comments} onReply={handleReply} />
+
+              <Divider />
+
+              <Title level={3} style={{ marginBottom: '24px' }}>
+                发表评论
+              </Title>
+              <CommentForm
+                articleId={articleId}
+                parentComment={parentComment}
+                onSubmit={handleCommentSubmit}
+              />
+            </>
+          )}
+        </section>
       </article>
     </div>
   );

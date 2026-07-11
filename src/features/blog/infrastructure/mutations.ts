@@ -82,3 +82,19 @@ export const INCREMENT_LIKE_COUNT = gql`
     }
   }
 `;
+
+export const CREATE_COMMENT = gql`
+  mutation CreateComment($input: CreateCommentInput!) {
+    createComment(input: $input) {
+      id
+      articleId
+      authorName
+      authorEmail
+      authorAvatar
+      content
+      parentId
+      status
+      createdAt
+    }
+  }
+`;

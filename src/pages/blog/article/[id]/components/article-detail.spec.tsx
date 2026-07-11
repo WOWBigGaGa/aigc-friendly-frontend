@@ -42,11 +42,19 @@ vi.mock('antd', async (importOriginal) => {
         ),
       },
     ),
+    Avatar: ({ src, alt }: { src?: string; alt?: string }) => (
+      <span data-testid="avatar" data-src={src}>
+        {alt}
+      </span>
+    ),
     Divider: () => <div data-testid="divider" />,
     Tag: ({ children, color }: { children?: React.ReactNode; color?: string }) => (
       <span data-testid="tag" data-color={color}>
         {children}
       </span>
+    ),
+    Tooltip: ({ children }: { children?: React.ReactNode }) => (
+      <span data-testid="tooltip">{children}</span>
     ),
     Typography: {
       Title: ({
@@ -62,14 +70,49 @@ vi.mock('antd', async (importOriginal) => {
           {children}
         </h1>
       ),
-      Text: ({ loading, children }: { loading?: boolean; children?: React.ReactNode }) => (
-        <span data-testid="text" data-loading={String(loading)}>
+      Text: ({
+        loading,
+        children,
+        strong,
+      }: {
+        loading?: boolean;
+        children?: React.ReactNode;
+        strong?: boolean;
+      }) => (
+        <span data-testid="text" data-loading={String(loading)} data-strong={String(strong)}>
           {children}
         </span>
       ),
       Paragraph: ({ children }: { children?: React.ReactNode }) => (
         <p data-testid="paragraph">{children}</p>
       ),
+    },
+    Spin: () => <div data-testid="spin" />,
+    Form: Object.assign(
+      ({ children }: { children?: React.ReactNode }) => (
+        <form data-testid="comment-form">{children}</form>
+      ),
+      {
+        useForm: () => [
+          {
+            resetFields: vi.fn(),
+            setFieldsValue: vi.fn(),
+          },
+        ],
+        Item: ({ children }: { children?: React.ReactNode }) => (
+          <div data-testid="form-item">{children}</div>
+        ),
+      },
+    ),
+    Input: Object.assign(() => <input data-testid="input" />, {
+      TextArea: () => <textarea data-testid="textarea" />,
+    }),
+    Button: ({ children }: { children?: React.ReactNode }) => (
+      <button data-testid="button">{children}</button>
+    ),
+    message: {
+      success: vi.fn(),
+      error: vi.fn(),
     },
   };
 });
@@ -78,6 +121,7 @@ vi.mock('@ant-design/icons', () => ({
   ClockCircleOutlined: () => <span data-testid="clock-icon" />,
   EyeOutlined: () => <span data-testid="eye-icon" />,
   HeartOutlined: () => <span data-testid="heart-icon" />,
+  MessageOutlined: () => <span data-testid="message-icon" />,
 }));
 
 vi.mock('react-markdown', () => ({
@@ -105,10 +149,24 @@ vi.mock('@/features/blog', () => ({
       },
     },
   },
+  GET_COMMENTS: {
+    loc: {
+      source: {
+        body: 'mock comments query',
+      },
+    },
+  },
   INCREMENT_VIEW_COUNT: {
     loc: {
       source: {
         body: 'mock increment view count mutation',
+      },
+    },
+  },
+  INCREMENT_LIKE_COUNT: {
+    loc: {
+      source: {
+        body: 'mock increment like count mutation',
       },
     },
   },
@@ -156,6 +214,26 @@ const createAdjacentArticles = (options: { prev?: boolean; next?: boolean } = {}
       : undefined,
 });
 
+const createComments = () => ({
+  items: [
+    {
+      id: 'comment-1',
+      articleId: 'article-1',
+      authorName: 'Commenter',
+      authorEmail: 'commenter@example.com',
+      authorAvatar: '',
+      content: 'Great article!',
+      parentId: null,
+      status: 'APPROVED',
+      createdAt: '2024-01-15T10:30:00Z',
+      updatedAt: '2024-01-15T10:30:00Z',
+    },
+  ],
+  total: 1,
+  page: 1,
+  pageSize: 50,
+});
+
 const setupMock = (
   articleOptions: { content?: string; category?: boolean } = {},
   adjacentOptions: { prev?: boolean; next?: boolean } = {},
@@ -163,7 +241,8 @@ const setupMock = (
   vi.mocked(executeGraphQL)
     .mockResolvedValueOnce({ article: createArticle(articleOptions) })
     .mockResolvedValueOnce({ adjacentArticles: createAdjacentArticles(adjacentOptions) })
-    .mockResolvedValueOnce({ incrementViewCount: createArticle(articleOptions) });
+    .mockResolvedValueOnce({ incrementViewCount: createArticle(articleOptions) })
+    .mockResolvedValueOnce({ comments: createComments() });
 };
 
 describe('ArticleDetail', () => {
@@ -352,11 +431,13 @@ describe('ArticleDetail', () => {
     );
 
     await waitFor(() => {
-      expect(executeGraphQL).toHaveBeenCalledTimes(3);
+      expect(executeGraphQL).toHaveBeenCalledTimes(4);
     });
 
-    expect(executeGraphQL).toHaveBeenLastCalledWith('mock increment view count mutation', {
-      id: 'article-1',
+    expect(executeGraphQL).toHaveBeenLastCalledWith('mock comments query', {
+      articleId: 'article-1',
+      page: 1,
+      pageSize: 50,
     });
   });
 
@@ -540,7 +621,8 @@ describe('ArticleDetail', () => {
     vi.mocked(executeGraphQL)
       .mockRejectedValueOnce(new Error('Network error'))
       .mockRejectedValueOnce(new Error('Network error'))
-      .mockResolvedValueOnce({ incrementViewCount: createArticle() });
+      .mockResolvedValueOnce({ incrementViewCount: createArticle() })
+      .mockResolvedValueOnce({ comments: createComments() });
 
     render(
       <MemoryRouter>
@@ -552,9 +634,149 @@ describe('ArticleDetail', () => {
       expect(screen.queryByTestId('article-error')).toBeInTheDocument();
     });
 
-    expect(executeGraphQL).toHaveBeenCalledTimes(3);
+    expect(executeGraphQL).toHaveBeenCalledTimes(4);
     expect(executeGraphQL).toHaveBeenCalledWith('mock increment view count mutation', {
       id: 'article-1',
+    });
+  });
+
+  it('calls incrementLikeCount mutation when like button is clicked', async () => {
+    setupMock();
+
+    render(
+      <MemoryRouter>
+        <ArticleDetail articleId="article-1" />
+      </MemoryRouter>,
+    );
+
+    await screen.findAllByTestId('title');
+
+    const heartIcon = screen.getByTestId('heart-icon');
+    fireEvent.click(heartIcon.parentElement!);
+
+    await waitFor(() => {
+      expect(executeGraphQL).toHaveBeenCalledWith('mock increment like count mutation', {
+        id: 'article-1',
+      });
+    });
+  });
+
+  it('updates like count after successful like', async () => {
+    vi.mocked(executeGraphQL)
+      .mockResolvedValueOnce({ article: createArticle() })
+      .mockResolvedValueOnce({ adjacentArticles: createAdjacentArticles() })
+      .mockResolvedValueOnce({ incrementViewCount: createArticle() })
+      .mockResolvedValueOnce({ comments: createComments() })
+      .mockResolvedValueOnce({ incrementLikeCount: { ...createArticle(), likeCount: 21 } });
+
+    render(
+      <MemoryRouter>
+        <ArticleDetail articleId="article-1" />
+      </MemoryRouter>,
+    );
+
+    await screen.findAllByTestId('title');
+
+    expect(screen.getByText('20')).toBeInTheDocument();
+
+    const heartIcon = screen.getByTestId('heart-icon');
+    fireEvent.click(heartIcon.parentElement!);
+
+    await waitFor(() => {
+      expect(screen.getByText('21')).toBeInTheDocument();
+    });
+  });
+
+  it('does not crash when like mutation fails', async () => {
+    vi.mocked(executeGraphQL)
+      .mockResolvedValueOnce({ article: createArticle() })
+      .mockResolvedValueOnce({ adjacentArticles: createAdjacentArticles() })
+      .mockResolvedValueOnce({ incrementViewCount: createArticle() })
+      .mockResolvedValueOnce({ comments: createComments() })
+      .mockRejectedValueOnce(new Error('Mutation error'));
+
+    render(
+      <MemoryRouter>
+        <ArticleDetail articleId="article-1" />
+      </MemoryRouter>,
+    );
+
+    await screen.findAllByTestId('title');
+
+    const heartIcon = screen.getByTestId('heart-icon');
+    fireEvent.click(heartIcon.parentElement!);
+
+    expect(screen.getByText('Test Article')).toBeInTheDocument();
+  });
+
+  it('fetches comments when article loads', async () => {
+    setupMock();
+
+    render(
+      <MemoryRouter>
+        <ArticleDetail articleId="article-1" />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(executeGraphQL).toHaveBeenCalledWith('mock comments query', {
+        articleId: 'article-1',
+        page: 1,
+        pageSize: 50,
+      });
+    });
+  });
+
+  it('renders comment section when comments are loaded', async () => {
+    setupMock();
+
+    render(
+      <MemoryRouter>
+        <ArticleDetail articleId="article-1" />
+      </MemoryRouter>,
+    );
+
+    await screen.findAllByTestId('title');
+
+    expect(screen.getByText('评论 (1)')).toBeInTheDocument();
+    expect(screen.getByText('Great article!')).toBeInTheDocument();
+  });
+
+  it('shows comments loading state', async () => {
+    vi.mocked(executeGraphQL)
+      .mockResolvedValueOnce({ article: createArticle() })
+      .mockResolvedValueOnce({ adjacentArticles: createAdjacentArticles() })
+      .mockResolvedValueOnce({ incrementViewCount: createArticle() })
+      .mockImplementationOnce(() => new Promise(() => {}));
+
+    render(
+      <MemoryRouter>
+        <ArticleDetail articleId="article-1" />
+      </MemoryRouter>,
+    );
+
+    await screen.findAllByTestId('title');
+
+    expect(screen.getByText('评论 (0)')).toBeInTheDocument();
+  });
+
+  it('shows comments error state when fetch fails', async () => {
+    vi.mocked(executeGraphQL)
+      .mockResolvedValueOnce({ article: createArticle() })
+      .mockResolvedValueOnce({ adjacentArticles: createAdjacentArticles() })
+      .mockResolvedValueOnce({ incrementViewCount: createArticle() })
+      .mockRejectedValueOnce(new Error('Network error'));
+
+    render(
+      <MemoryRouter>
+        <ArticleDetail articleId="article-1" />
+      </MemoryRouter>,
+    );
+
+    await screen.findAllByTestId('title');
+
+    await waitFor(() => {
+      expect(screen.getByText('评论加载失败，请稍后重试')).toBeInTheDocument();
     });
   });
 });

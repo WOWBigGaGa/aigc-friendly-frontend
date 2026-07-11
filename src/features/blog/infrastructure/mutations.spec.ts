@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   CREATE_ARTICLE,
+  CREATE_COMMENT,
   DELETE_ARTICLE,
   INCREMENT_LIKE_COUNT,
   INCREMENT_VIEW_COUNT,
@@ -38,5 +39,10 @@ describe('Blog GraphQL Mutations', () => {
   it('INCREMENT_LIKE_COUNT should be defined', () => {
     expect(INCREMENT_LIKE_COUNT).toBeDefined();
     expect(INCREMENT_LIKE_COUNT.loc?.source.body).toBeDefined();
+  });
+
+  it('CREATE_COMMENT should be defined', () => {
+    expect(CREATE_COMMENT).toBeDefined();
+    expect(CREATE_COMMENT.loc?.source.body).toBeDefined();
   });
 });

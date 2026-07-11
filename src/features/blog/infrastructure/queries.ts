@@ -187,3 +187,25 @@ export const GET_ADJACENT_ARTICLES = gql`
     }
   }
 `;
+
+export const GET_COMMENTS = gql`
+  query GetComments($articleId: ID!, $page: Int, $pageSize: Int) {
+    comments(articleId: $articleId, pagination: { page: $page, limit: $pageSize }) {
+      items {
+        id
+        articleId
+        authorName
+        authorEmail
+        authorAvatar
+        content
+        parentId
+        status
+        createdAt
+        updatedAt
+      }
+      total
+      page
+      pageSize
+    }
+  }
+`;

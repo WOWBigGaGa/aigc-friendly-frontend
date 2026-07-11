@@ -7,6 +7,7 @@ import {
   GET_ARTICLES_BY_CATEGORY,
   GET_ARTICLES_BY_TAG,
   GET_CATEGORIES,
+  GET_COMMENTS,
   GET_TAGS,
   SEARCH_ARTICLES,
 } from './queries';
@@ -50,5 +51,10 @@ describe('Blog GraphQL Queries', () => {
   it('GET_ARCHIVES should be defined', () => {
     expect(GET_ARCHIVES).toBeDefined();
     expect(GET_ARCHIVES.loc?.source.body).toBeDefined();
+  });
+
+  it('GET_COMMENTS should be defined', () => {
+    expect(GET_COMMENTS).toBeDefined();
+    expect(GET_COMMENTS.loc?.source.body).toBeDefined();
   });
 });
