@@ -113,6 +113,7 @@ vi.mock('antd', async (importOriginal) => {
     message: {
       success: vi.fn(),
       error: vi.fn(),
+      warning: vi.fn(),
     },
   };
 });
@@ -232,6 +233,7 @@ const createComments = () => ({
   total: 1,
   page: 1,
   pageSize: 50,
+  pageInfo: { hasNext: false },
 });
 
 const setupMock = (
@@ -437,7 +439,7 @@ describe('ArticleDetail', () => {
     expect(executeGraphQL).toHaveBeenLastCalledWith('mock comments query', {
       articleId: 'article-1',
       page: 1,
-      pageSize: 50,
+      pageSize: 10,
     });
   });
 
@@ -722,7 +724,7 @@ describe('ArticleDetail', () => {
       expect(executeGraphQL).toHaveBeenCalledWith('mock comments query', {
         articleId: 'article-1',
         page: 1,
-        pageSize: 50,
+        pageSize: 10,
       });
     });
   });

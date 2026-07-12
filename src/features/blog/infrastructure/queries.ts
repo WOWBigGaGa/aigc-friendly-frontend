@@ -209,3 +209,19 @@ export const GET_COMMENTS = gql`
     }
   }
 `;
+
+export const GET_FRIEND_LINKS = gql`
+  query GetFriendLinks {
+    friendLinks {
+      id
+      name
+      url
+      description
+      logo
+      sort
+      isActive
+      createdAt
+      updatedAt
+    }
+  }
+`;

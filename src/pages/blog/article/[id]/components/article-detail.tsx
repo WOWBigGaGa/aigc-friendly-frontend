@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ClockCircleOutlined, EyeOutlined, HeartOutlined } from '@ant-design/icons';
-import { Divider, Spin, Tag, Typography } from 'antd';
+import { Button, Divider, message, Spin, Tag, Typography } from 'antd';
 import ReactMarkdown from 'react-markdown';
 
 import {
@@ -12,6 +12,7 @@ import {
 } from '@/features/blog';
 
 import { executeGraphQL } from '@/shared/graphql';
+import { getErrorMessage } from '@/shared/graphql/error-handler';
 
 import { CommentForm } from './comment-form';
 import { CommentList } from './comment-list';
@@ -88,6 +89,9 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsError, setCommentsError] = useState<Error | null>(null);
+  const [commentsPage, setCommentsPage] = useState(1);
+  const [commentsTotal, setCommentsTotal] = useState(0);
+  const [commentsHasNext, setCommentsHasNext] = useState(false);
   const [parentComment, setParentComment] = useState<ParentComment | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -154,20 +158,34 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
     fetchComments();
   }, [articleId]);
 
-  const fetchComments = async () => {
+  const fetchComments = async (page: number = 1, append: boolean = false) => {
     setCommentsLoading(true);
     setCommentsError(null);
     try {
       const queryBody = GET_COMMENTS.loc?.source?.body ?? '';
       const result = await executeGraphQL<
-        { comments: { items: Comment[] } },
+        { comments: { items: Comment[]; total: number; pageInfo: { hasNext: boolean } } },
         { articleId: string; page: number; pageSize: number }
-      >(queryBody, { articleId, page: 1, pageSize: 50 });
-      setComments(result.comments.items);
+      >(queryBody, { articleId, page, pageSize: 10 });
+
+      if (append) {
+        setComments((prev) => [...prev, ...result.comments.items]);
+      } else {
+        setComments(result.comments.items);
+        setCommentsPage(page);
+      }
+      setCommentsTotal(result.comments.total);
+      setCommentsHasNext(result.comments.pageInfo.hasNext);
     } catch (err) {
       setCommentsError(err as Error);
     } finally {
       setCommentsLoading(false);
+    }
+  };
+
+  const loadMoreComments = () => {
+    if (commentsHasNext && !commentsLoading) {
+      fetchComments(commentsPage + 1, true);
     }
   };
 
@@ -240,7 +258,8 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
         likeCount: result.incrementLikeCount.likeCount,
       });
     } catch (err) {
-      console.warn('Failed to increment like count');
+      const errorMessage = getErrorMessage(err);
+      message.warning(errorMessage || '点赞失败');
     }
   };
 
@@ -638,7 +657,7 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
 
         <section style={{ marginTop: '32px' }}>
           <Title level={2} style={{ marginBottom: '24px' }}>
-            评论 ({comments.length})
+            评论 ({commentsTotal})
           </Title>
 
           {commentsLoading ? (
@@ -652,6 +671,19 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
           ) : (
             <>
               <CommentList comments={comments} onReply={handleReply} />
+
+              {commentsHasNext && (
+                <div style={{ textAlign: 'center', marginTop: '24px' }}>
+                  <Button
+                    type="dashed"
+                    loading={commentsLoading}
+                    onClick={loadMoreComments}
+                    size="large"
+                  >
+                    加载更多评论
+                  </Button>
+                </div>
+              )}
 
               <Divider />
 

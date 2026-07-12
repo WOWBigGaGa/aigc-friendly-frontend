@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Form, Input, Button, message } from 'antd';
+import { useEffect, useState } from 'react';
+import { Button, Form, Input, message } from 'antd';
 
 import { CREATE_COMMENT } from '@/features/blog';
 
 import { executeGraphQL } from '@/shared/graphql';
+import { getErrorMessage } from '@/shared/graphql/error-handler';
 
 interface ParentComment {
   id: string;
@@ -66,19 +67,15 @@ export function CommentForm({ articleId, parentComment, onSubmit }: CommentFormP
       form.resetFields();
       onSubmit();
     } catch (err) {
-      message.error('评论提交失败，请稍后重试');
+      const errorMessage = getErrorMessage(err);
+      message.error(errorMessage || '评论提交失败，请稍后重试');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Form
-      form={form}
-      onFinish={handleSubmit}
-      layout="vertical"
-      style={{ marginTop: '24px' }}
-    >
+    <Form form={form} onFinish={handleSubmit} layout="vertical" style={{ marginTop: '24px' }}>
       {parentComment && (
         <div
           style={{
@@ -124,11 +121,7 @@ export function CommentForm({ articleId, parentComment, onSubmit }: CommentFormP
           { max: 2000, message: '评论内容不能超过2000个字符' },
         ]}
       >
-        <Input.TextArea
-          placeholder="请输入评论内容"
-          rows={4}
-          size="large"
-        />
+        <Input.TextArea placeholder="请输入评论内容" rows={4} size="large" />
       </Form.Item>
 
       <Form.Item>
