@@ -1,38 +1,50 @@
-import { GithubOutlined, MailOutlined, LinkOutlined, UserOutlined } from '@ant-design/icons';
-import { Avatar, Card, Tag, Typography } from 'antd';
+import { useEffect, useState } from 'react';
+import { GithubOutlined, LinkOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
+import { Alert, Avatar, Card, Spin, Tag, Typography } from 'antd';
+
+import { GET_BLOG_PROFILE } from '@/features/blog';
+
+import { executeGraphQL } from '@/shared/graphql';
 
 const { Title, Paragraph } = Typography;
 
-interface Skill {
+interface BlogProfile {
   name: string;
-  category: 'language' | 'framework' | 'database' | 'tool';
+  avatar: string | null;
+  bio: string | null;
+  githubUrl: string | null;
+  email: string | null;
+  websiteUrl: string | null;
+  skills: Record<string, string[]>;
 }
 
-const skills: Skill[] = [
-  { name: 'TypeScript', category: 'language' },
-  { name: 'JavaScript', category: 'language' },
-  { name: 'Python', category: 'language' },
-  { name: 'Go', category: 'language' },
-  { name: 'React', category: 'framework' },
-  { name: 'NestJS', category: 'framework' },
-  { name: 'Next.js', category: 'framework' },
-  { name: 'Vue', category: 'framework' },
-  { name: 'PostgreSQL', category: 'database' },
-  { name: 'MySQL', category: 'database' },
-  { name: 'Redis', category: 'database' },
-  { name: 'Docker', category: 'tool' },
-  { name: 'Git', category: 'tool' },
-  { name: 'Kubernetes', category: 'tool' },
-];
+interface BlogProfileQueryResult {
+  blogProfile: BlogProfile | null;
+}
 
-const skillCategoryColors: Record<Skill['category'], string> = {
+const defaultProfile: BlogProfile = {
+  name: 'YYan',
+  avatar: null,
+  bio: '热爱编程，专注于 Web 开发领域。拥有丰富的全栈开发经验，擅长使用 TypeScript、React、NestJS 等技术栈构建高质量的应用程序。喜欢分享技术心得，希望通过博客记录学习历程，帮助更多开发者成长。',
+  githubUrl: 'https://github.com/WOWBigGaGa',
+  email: 'Yyan_BigGaGa@outlook.com',
+  websiteUrl: null,
+  skills: {
+    language: ['TypeScript', 'JavaScript', 'Python', 'Go'],
+    framework: ['React', 'NestJS', 'Next.js', 'Vue'],
+    database: ['PostgreSQL', 'MySQL', 'Redis'],
+    tool: ['Docker', 'Git', 'Kubernetes'],
+  },
+};
+
+const skillCategoryColors: Record<string, string> = {
   language: 'blue',
   framework: 'purple',
   database: 'green',
   tool: 'orange',
 };
 
-const skillCategoryLabels: Record<Skill['category'], string> = {
+const skillCategoryLabels: Record<string, string> = {
   language: '语言',
   framework: '框架',
   database: '数据库',
@@ -40,80 +52,139 @@ const skillCategoryLabels: Record<Skill['category'], string> = {
 };
 
 export function BlogAboutPage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [profile, setProfile] = useState<BlogProfile>(defaultProfile);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const queryBody = GET_BLOG_PROFILE.loc?.source?.body ?? '';
+        const result = await executeGraphQL<BlogProfileQueryResult, Record<string, never>>(
+          queryBody,
+          {},
+        );
+        if (result.blogProfile) {
+          setProfile(result.blogProfile);
+        }
+      } catch (err) {
+        setError(err as Error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '40px' }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert message="加载失败" description="个人信息加载失败，请稍后重试" type="error" showIcon />
+    );
+  }
+
   return (
     <div className="blog-about">
       <Card className="about-card">
         <div className="about-header">
-          <Avatar size={120} icon={<UserOutlined />} className="about-avatar" />
+          <Avatar
+            size={120}
+            icon={profile.avatar ? undefined : <UserOutlined />}
+            src={profile.avatar || undefined}
+            className="about-avatar"
+          />
           <div className="about-info">
-            <Title level={2}>YYan</Title>
+            <Title level={2}>{profile.name}</Title>
             <Paragraph className="about-title">全栈开发者 / 技术博主</Paragraph>
             <div className="social-links">
-              <a
-                href="https://github.com/WOWBigGaGa"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="social-link"
-              >
-                <GithubOutlined />
-              </a>
-              <a
-                href="mailto:Yyan_BigGaGa@outlook.com"
-                className="social-link"
-              >
-                <MailOutlined />
-              </a>
-              <a
-                href="#"
-                className="social-link"
-              >
-                <LinkOutlined />
-              </a>
+              {profile.githubUrl && (
+                <a
+                  href={profile.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="social-link"
+                >
+                  <GithubOutlined />
+                </a>
+              )}
+              {profile.email && (
+                <a href={`mailto:${profile.email}`} className="social-link">
+                  <MailOutlined />
+                </a>
+              )}
+              {profile.websiteUrl && (
+                <a
+                  href={profile.websiteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="social-link"
+                >
+                  <LinkOutlined />
+                </a>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="about-section">
-          <Title level={3}>关于我</Title>
-          <Paragraph>
-            热爱编程，专注于 Web 开发领域。拥有丰富的全栈开发经验，擅长使用 TypeScript、React、NestJS 等技术栈构建高质量的应用程序。
-          </Paragraph>
-          <Paragraph>
-            喜欢分享技术心得，希望通过博客记录学习历程，帮助更多开发者成长。
-          </Paragraph>
-        </div>
-
-        <div className="about-section">
-          <Title level={3}>技能栈</Title>
-          <div className="skills-container">
-            {Object.entries(skillCategoryLabels).map(([category, label]) => (
-              <div key={category} className="skill-category">
-                <div className="skill-category-label">{label}</div>
-                <div className="skill-tags">
-                  {skills
-                    .filter((skill) => skill.category === category)
-                    .map((skill) => (
-                      <Tag key={skill.name} color={skillCategoryColors[skill.category as Skill['category']]}>
-                        {skill.name}
-                      </Tag>
-                    ))}
-                </div>
-              </div>
-            ))}
+        {profile.bio && (
+          <div className="about-section">
+            <Title level={3}>关于我</Title>
+            <Paragraph>{profile.bio}</Paragraph>
           </div>
-        </div>
+        )}
+
+        {profile.skills && Object.keys(profile.skills).length > 0 && (
+          <div className="about-section">
+            <Title level={3}>技能栈</Title>
+            <div className="skills-container">
+              {Object.entries(skillCategoryLabels).map(([category, label]) => {
+                const categorySkills = profile.skills[category];
+                if (!categorySkills || categorySkills.length === 0) {
+                  return null;
+                }
+                return (
+                  <div key={category} className="skill-category">
+                    <div className="skill-category-label">{label}</div>
+                    <div className="skill-tags">
+                      {categorySkills.map((skill) => (
+                        <Tag key={skill} color={skillCategoryColors[category] || 'default'}>
+                          {skill}
+                        </Tag>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="about-section">
           <Title level={3}>联系方式</Title>
-          <Paragraph>
-            <strong>邮箱：</strong> Yyan_BigGaGa@outlook.com
-          </Paragraph>
-          <Paragraph>
-            <strong>GitHub：</strong>{' '}
-            <a href="https://github.com/WOWBigGaGa" target="_blank" rel="noopener noreferrer">
-              https://github.com/WOWBigGaGa
-            </a>
-          </Paragraph>
+          {profile.email && (
+            <Paragraph>
+              <strong>邮箱：</strong> {profile.email}
+            </Paragraph>
+          )}
+          {profile.githubUrl && (
+            <Paragraph>
+              <strong>GitHub：</strong>{' '}
+              <a href={profile.githubUrl} target="_blank" rel="noopener noreferrer">
+                {profile.githubUrl}
+              </a>
+            </Paragraph>
+          )}
         </div>
       </Card>
     </div>

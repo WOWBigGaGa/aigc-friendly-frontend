@@ -14,6 +14,7 @@ export function parseGraphQLError(error: unknown): GraphQLErrorDetail {
         };
       }
     } catch {
+      // Ignore JSON parse error
     }
     return { message: error.message };
   }

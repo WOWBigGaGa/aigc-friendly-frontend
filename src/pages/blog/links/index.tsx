@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Alert, Card, Spin, Typography } from 'antd';
 
-import { GET_FRIEND_LINKS } from '@/features/blog';
+import { GET_ACTIVE_FRIEND_LINKS } from '@/features/blog';
 
 import { executeGraphQL } from '@/shared/graphql';
+import { LazyImage } from '@/shared/ui/lazy-image';
 
 const { Title, Paragraph } = Typography;
 
@@ -13,14 +14,10 @@ interface FriendLink {
   url: string;
   description: string | null;
   logo: string | null;
-  sort: number;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
 interface FriendLinksQueryResult {
-  friendLinks: FriendLink[];
+  activeFriendLinks: FriendLink[];
 }
 
 export function BlogLinksPage() {
@@ -34,12 +31,12 @@ export function BlogLinksPage() {
       setError(null);
 
       try {
-        const queryBody = GET_FRIEND_LINKS.loc?.source?.body ?? '';
+        const queryBody = GET_ACTIVE_FRIEND_LINKS.loc?.source?.body ?? '';
         const result = await executeGraphQL<FriendLinksQueryResult, Record<string, never>>(
           queryBody,
           {},
         );
-        setFriendLinks(result.friendLinks);
+        setFriendLinks(result.activeFriendLinks);
       } catch (err) {
         setError(err as Error);
       } finally {
@@ -64,8 +61,6 @@ export function BlogLinksPage() {
     );
   }
 
-  const activeLinks = friendLinks.filter((link) => link.isActive);
-
   return (
     <div className="blog-links">
       <Card className="links-header">
@@ -73,23 +68,34 @@ export function BlogLinksPage() {
         <Paragraph>感谢以下朋友的支持与链接交换</Paragraph>
       </Card>
 
-      {activeLinks.length === 0 ? (
+      {friendLinks.length === 0 ? (
         <Card className="links-empty">
           <Paragraph>暂无友链，期待您的加入！</Paragraph>
         </Card>
       ) : (
         <div className="links-grid">
-          {activeLinks.map((link) => (
+          {friendLinks.map((link) => (
             <Card
               key={link.id}
               className="link-card"
               hoverable
-              onClick={() => window.open(link.url, '_blank')}
+              onClick={() => {
+                const anchor = document.createElement('a');
+                anchor.href = link.url;
+                anchor.target = '_blank';
+                anchor.rel = 'noopener noreferrer';
+                anchor.click();
+              }}
             >
               <div className="link-content">
                 {link.logo && (
                   <div className="link-logo">
-                    <img src={link.logo} alt={link.name} />
+                    <LazyImage
+                      src={link.logo}
+                      alt={link.name}
+                      style={{ width: '64px', height: '64px' }}
+                      placeholderStyle={{ width: '64px', height: '64px' }}
+                    />
                   </div>
                 )}
                 <div className="link-info">

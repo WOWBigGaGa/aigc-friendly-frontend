@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ClockCircleOutlined, SearchOutlined } from '@ant-design/icons';
 import { Alert, Input, List, Pagination, Spin, Tag, Typography } from 'antd';
 import { useSearchParams } from 'react-router';
@@ -63,19 +63,7 @@ export function BlogSearchPage() {
   const [data, setData] = useState<SearchResult | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    const q = searchParams.get('q');
-    if (q) {
-      setKeyword(q);
-      setCurrentPage(1);
-      fetchSearchResults(q, 1);
-    } else {
-      setData(null);
-      setError(null);
-    }
-  }, [searchParams.get('q')]);
-
-  const fetchSearchResults = async (searchKeyword: string, page: number) => {
+  const fetchSearchResults = useCallback(async (searchKeyword: string, page: number) => {
     if (!searchKeyword.trim()) {
       setData(null);
       setError(null);
@@ -98,7 +86,19 @@ export function BlogSearchPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q) {
+      setKeyword(q);
+      setCurrentPage(1);
+      fetchSearchResults(q, 1);
+    } else {
+      setData(null);
+      setError(null);
+    }
+  }, [searchParams.get('q'), fetchSearchResults]);
 
   const handleSearch = () => {
     if (keyword.trim()) {

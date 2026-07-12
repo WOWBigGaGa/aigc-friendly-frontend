@@ -12,6 +12,8 @@
     "lint:z-index": "node scripts/lint-z-index.mjs",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "check": "npm run format:check && npm run lint && npm run build",
     "security:audit": "npm audit --registry=https://registry.npmjs.org",
     "security:signatures": "npm audit signatures --registry=https://registry.npmjs.org",
@@ -34,6 +36,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/vite": "^4.3.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

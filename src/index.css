@@ -159,6 +159,12 @@ body {
   margin: 0;
 }
 
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .app-shell {
   background: var(--ant-color-bg-layout);
   min-height: 100vh;

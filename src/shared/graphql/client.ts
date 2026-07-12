@@ -1,6 +1,6 @@
 // src/shared/graphql/client.ts
 
-import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client';
+import { ApolloClient, createHttpLink, InMemoryCache } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 
 import { getGraphQLEndpoint } from '@/shared/env';
@@ -56,7 +56,7 @@ function removeAuthorizationHeader(headers: unknown) {
 }
 
 function createApolloClient() {
-  const httpLink = new HttpLink({
+  const httpLink = createHttpLink({
     uri: getGraphQLEndpoint(),
   });
   const authLink = setContext((_, previousContext) => {
@@ -79,8 +79,91 @@ function createApolloClient() {
     };
   });
 
+  const cache = new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          articles: {
+            keyArgs: ['page'],
+            merge(existing, incoming) {
+              if (!existing) return incoming;
+              return {
+                ...incoming,
+                items: [...existing.items, ...incoming.items],
+              };
+            },
+          },
+          comments: {
+            keyArgs: ['page'],
+            merge(existing, incoming) {
+              if (!existing) return incoming;
+              return {
+                ...incoming,
+                items: [...existing.items, ...incoming.items],
+              };
+            },
+          },
+          pendingComments: {
+            keyArgs: ['page'],
+            merge(existing, incoming) {
+              if (!existing) return incoming;
+              return {
+                ...incoming,
+                items: [...existing.items, ...incoming.items],
+              };
+            },
+          },
+          allFriendLinks: {
+            merge(_existing, incoming) {
+              return incoming;
+            },
+          },
+          activeFriendLinks: {
+            merge(_existing, incoming) {
+              return incoming;
+            },
+          },
+          blogProfile: {
+            merge(_existing, incoming) {
+              return incoming;
+            },
+          },
+          categories: {
+            merge(_existing, incoming) {
+              return incoming;
+            },
+          },
+          tags: {
+            merge(_existing, incoming) {
+              return incoming;
+            },
+          },
+          archives: {
+            merge(_existing, incoming) {
+              return incoming;
+            },
+          },
+        },
+      },
+      Article: {
+        fields: {
+          likeCount: {
+            merge(existing, incoming) {
+              return incoming ?? existing;
+            },
+          },
+          viewCount: {
+            merge(existing, incoming) {
+              return incoming ?? existing;
+            },
+          },
+        },
+      },
+    },
+  });
+
   return new ApolloClient({
-    cache: new InMemoryCache(),
+    cache,
     link: authLink.concat(httpLink),
   });
 }

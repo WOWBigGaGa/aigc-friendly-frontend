@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ClockCircleOutlined } from '@ant-design/icons';
 import { Alert, List, Pagination, Spin, Tag, Typography } from 'antd';
 import { useParams, useSearchParams } from 'react-router';
@@ -60,13 +60,7 @@ export function BlogTagPage() {
   const [tag, setTag] = useState<TagType | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    const page = parseInt(searchParams.get('page') || '1');
-    setCurrentPage(page);
-    fetchTagData(slug!, page);
-  }, [slug, searchParams.get('page')]);
-
-  const fetchTagData = async (tagSlug: string, page: number) => {
+  const fetchTagData = useCallback(async (tagSlug: string, page: number) => {
     setLoading(true);
     setError(null);
 
@@ -77,7 +71,7 @@ export function BlogTagPage() {
           page,
           pageSize: 10,
         }),
-        executeGraphQL<TagsResult, {}>(GET_TAGS.loc?.source?.body ?? '', {}),
+        executeGraphQL<TagsResult, Record<string, never>>(GET_TAGS.loc?.source?.body ?? '', {}),
       ]);
 
       setData(articlesResult);
@@ -88,7 +82,13 @@ export function BlogTagPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const page = parseInt(searchParams.get('page') || '1');
+    setCurrentPage(page);
+    fetchTagData(slug!, page);
+  }, [slug, searchParams.get('page'), fetchTagData]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);

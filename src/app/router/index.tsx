@@ -7,19 +7,19 @@ import {
   RouterProvider,
   useRouteError,
 } from 'react-router';
+import { lazy, Suspense } from 'react';
 
 import { AppLayout, ArticleLayout, BlogLayout } from '@/app/layout';
 
-import {
-  BlogAboutPage,
-  BlogArchivePage,
-  BlogArticlePage,
-  BlogCategoryPage,
-  BlogHomePage,
-  BlogLinksPage,
-  BlogSearchPage,
-  BlogTagPage,
-} from '@/pages/blog';
+const BlogAboutPage = lazy(() => import('@/pages/blog/about').then((mod) => ({ default: mod.BlogAboutPage })));
+const BlogArchivePage = lazy(() => import('@/pages/blog/archive/[year]/[month]').then((mod) => ({ default: mod.BlogArchivePage })));
+const BlogArticlePage = lazy(() => import('@/pages/blog/article/[id]').then((mod) => ({ default: mod.BlogArticlePage })));
+const BlogCategoryPage = lazy(() => import('@/pages/blog/category/[slug]').then((mod) => ({ default: mod.BlogCategoryPage })));
+const BlogHomePage = lazy(() => import('@/pages/blog/home').then((mod) => ({ default: mod.BlogHomePage })));
+const BlogLinksPage = lazy(() => import('@/pages/blog/links').then((mod) => ({ default: mod.BlogLinksPage })));
+const BlogSearchPage = lazy(() => import('@/pages/blog/search').then((mod) => ({ default: mod.BlogSearchPage })));
+const BlogTagPage = lazy(() => import('@/pages/blog/tag/[slug]').then((mod) => ({ default: mod.BlogTagPage })));
+
 import { ErrorPreviewPage } from '@/pages/error-preview';
 import { HomePage } from '@/pages/home';
 import { ProjectStructurePage } from '@/pages/project-structure';
@@ -55,6 +55,29 @@ function RouteErrorBoundary() {
     <AppLayout>
       <RouteErrorPage />
     </AppLayout>
+  );
+}
+
+function SuspenseFallback() {
+  return (
+    <div style={{ textAlign: 'center', padding: '40px' }}>
+      <div
+        style={{
+          width: '40px',
+          height: '40px',
+          border: '4px solid var(--ant-color-border)',
+          borderTopColor: 'var(--ant-color-primary)',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite',
+          margin: '0 auto',
+        }}
+      />
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
   );
 }
 
@@ -102,31 +125,59 @@ const router = createBrowserRouter([
       {
         children: [
           {
-            element: <BlogHomePage />,
+            element: (
+              <Suspense fallback={<SuspenseFallback />}>
+                <BlogHomePage />
+              </Suspense>
+            ),
             index: true,
           },
           {
-            element: <BlogCategoryPage />,
+            element: (
+              <Suspense fallback={<SuspenseFallback />}>
+                <BlogCategoryPage />
+              </Suspense>
+            ),
             path: 'category/:slug',
           },
           {
-            element: <BlogTagPage />,
+            element: (
+              <Suspense fallback={<SuspenseFallback />}>
+                <BlogTagPage />
+              </Suspense>
+            ),
             path: 'tag/:slug',
           },
           {
-            element: <BlogArchivePage />,
+            element: (
+              <Suspense fallback={<SuspenseFallback />}>
+                <BlogArchivePage />
+              </Suspense>
+            ),
             path: 'archive/:year/:month',
           },
           {
-            element: <BlogAboutPage />,
+            element: (
+              <Suspense fallback={<SuspenseFallback />}>
+                <BlogAboutPage />
+              </Suspense>
+            ),
             path: 'about',
           },
           {
-            element: <BlogLinksPage />,
+            element: (
+              <Suspense fallback={<SuspenseFallback />}>
+                <BlogLinksPage />
+              </Suspense>
+            ),
             path: 'links',
           },
           {
-            element: <BlogSearchPage />,
+            element: (
+              <Suspense fallback={<SuspenseFallback />}>
+                <BlogSearchPage />
+              </Suspense>
+            ),
             path: 'search',
           },
         ],
@@ -136,7 +187,11 @@ const router = createBrowserRouter([
       {
         children: [
           {
-            element: <BlogArticlePage />,
+            element: (
+              <Suspense fallback={<SuspenseFallback />}>
+                <BlogArticlePage />
+              </Suspense>
+            ),
             path: ':id',
           },
         ],

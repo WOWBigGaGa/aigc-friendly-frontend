@@ -57,13 +57,19 @@ vi.mock('@/shared/graphql', () => ({
 }));
 
 vi.mock('@/features/blog', () => ({
-  GET_FRIEND_LINKS: {
+  GET_ACTIVE_FRIEND_LINKS: {
     loc: {
       source: {
-        body: 'mock friend links query',
+        body: 'mock active friend links query',
       },
     },
   },
+}));
+
+vi.mock('@/shared/ui/lazy-image', () => ({
+  LazyImage: ({ src, alt }: { src: string; alt: string }) => (
+    <img data-testid="lazy-image" src={src} alt={alt} />
+  ),
 }));
 
 const mockFriendLinks = [
@@ -73,10 +79,6 @@ const mockFriendLinks = [
     url: 'https://test.com',
     description: 'A test blog description',
     logo: 'https://test.com/logo.png',
-    sort: 0,
-    isActive: true,
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z',
   },
   {
     id: 'link-2',
@@ -84,28 +86,13 @@ const mockFriendLinks = [
     url: 'https://another.com',
     description: null,
     logo: null,
-    sort: 1,
-    isActive: true,
-    createdAt: '2024-01-02T00:00:00Z',
-    updatedAt: '2024-01-02T00:00:00Z',
-  },
-  {
-    id: 'link-3',
-    name: 'Inactive Blog',
-    url: 'https://inactive.com',
-    description: 'This blog is inactive',
-    logo: null,
-    sort: 2,
-    isActive: false,
-    createdAt: '2024-01-03T00:00:00Z',
-    updatedAt: '2024-01-03T00:00:00Z',
   },
 ];
 
 describe('BlogLinksPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(executeGraphQL).mockResolvedValue({ friendLinks: mockFriendLinks });
+    vi.mocked(executeGraphQL).mockResolvedValue({ activeFriendLinks: mockFriendLinks });
     window.matchMedia = vi.fn().mockImplementation(
       (query) =>
         ({
@@ -152,23 +139,9 @@ describe('BlogLinksPage', () => {
     expect(screen.getByText('Another Blog')).toBeInTheDocument();
   });
 
-  it('should filter out inactive friend links', async () => {
-    render(
-      <MemoryRouter>
-        <BlogLinksPage />
-      </MemoryRouter>,
-    );
-
-    await waitFor(() => {
-      expect(screen.queryByTestId('spin')).not.toBeInTheDocument();
-    });
-
-    expect(screen.queryByText('Inactive Blog')).not.toBeInTheDocument();
-  });
-
   it('should render empty state when no active friend links', async () => {
     vi.mocked(executeGraphQL).mockResolvedValue({
-      friendLinks: [{ ...mockFriendLinks[0], isActive: false }],
+      activeFriendLinks: [],
     });
 
     render(
@@ -215,8 +188,10 @@ describe('BlogLinksPage', () => {
       expect(screen.queryByTestId('spin')).not.toBeInTheDocument();
     });
 
-    const cards = screen.getAllByTestId('card');
-    expect(cards.length).toBe(3);
+    const cards = screen
+      .getAllByTestId('card')
+      .filter((card) => card.getAttribute('data-hoverable') === 'true');
+    expect(cards.length).toBe(2);
   });
 
   it('should call executeGraphQL with correct query', async () => {
@@ -230,6 +205,38 @@ describe('BlogLinksPage', () => {
       expect(executeGraphQL).toHaveBeenCalled();
     });
 
-    expect(executeGraphQL).toHaveBeenCalledWith('mock friend links query', {});
+    expect(executeGraphQL).toHaveBeenCalledWith('mock active friend links query', {});
+  });
+
+  it('should render link with logo when logo is provided', async () => {
+    render(
+      <MemoryRouter>
+        <BlogLinksPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('spin')).not.toBeInTheDocument();
+    });
+
+    const lazyImages = screen.getAllByTestId('lazy-image');
+    const testBlogImage = lazyImages.find((img) => img.getAttribute('alt') === 'Test Blog');
+    expect(testBlogImage).toBeInTheDocument();
+    expect(testBlogImage).toHaveAttribute('src', 'https://test.com/logo.png');
+  });
+
+  it('should not render logo when logo is null', async () => {
+    render(
+      <MemoryRouter>
+        <BlogLinksPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('spin')).not.toBeInTheDocument();
+    });
+
+    const lazyImages = screen.getAllByTestId('lazy-image');
+    expect(lazyImages.length).toBe(1);
   });
 });

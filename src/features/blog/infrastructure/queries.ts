@@ -218,10 +218,32 @@ export const GET_FRIEND_LINKS = gql`
       url
       description
       logo
-      sort
-      isActive
-      createdAt
-      updatedAt
+    }
+  }
+`;
+
+export const GET_ACTIVE_FRIEND_LINKS = gql`
+  query GetActiveFriendLinks {
+    activeFriendLinks {
+      id
+      name
+      url
+      description
+      logo
+    }
+  }
+`;
+
+export const GET_BLOG_PROFILE = gql`
+  query GetBlogProfile {
+    blogProfile {
+      name
+      avatar
+      bio
+      githubUrl
+      email
+      websiteUrl
+      skills
     }
   }
 `;

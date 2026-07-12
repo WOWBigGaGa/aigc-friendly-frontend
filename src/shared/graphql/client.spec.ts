@@ -75,4 +75,15 @@ describe('GraphQL Client', () => {
 
     expect(client1).toBe(client2);
   });
+
+  describe('Cache Configuration', () => {
+    it('client has cache with typePolicies', () => {
+      const client = getGraphQLClient();
+      const cache = client.cache;
+
+      expect(cache).toBeDefined();
+      expect(typeof cache.readQuery).toBe('function');
+      expect(typeof cache.writeQuery).toBe('function');
+    });
+  });
 });
