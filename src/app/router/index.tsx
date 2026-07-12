@@ -60,23 +60,8 @@ function RouteErrorBoundary() {
 
 function SuspenseFallback() {
   return (
-    <div style={{ textAlign: 'center', padding: '40px' }}>
-      <div
-        style={{
-          width: '40px',
-          height: '40px',
-          border: '4px solid var(--ant-color-border)',
-          borderTopColor: 'var(--ant-color-primary)',
-          borderRadius: '50%',
-          animation: 'spin 0.8s linear infinite',
-          margin: '0 auto',
-        }}
-      />
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
+    <div className="loading-container">
+      <div className="loading-spinner" />
     </div>
   );
 }

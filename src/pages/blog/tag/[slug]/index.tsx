@@ -82,7 +82,7 @@ export function BlogTagPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setData, setError, setLoading, setTag]);
 
   useEffect(() => {
     const page = parseInt(searchParams.get('page') || '1');

@@ -71,6 +71,7 @@ export function BlogAboutPage() {
           setProfile(result.blogProfile);
         }
       } catch (err) {
+        console.error('Failed to fetch blog profile:', err);
         setError(err as Error);
       } finally {
         setLoading(false);

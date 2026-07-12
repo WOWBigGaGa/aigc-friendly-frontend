@@ -38,6 +38,7 @@ export function BlogLinksPage() {
         );
         setFriendLinks(result.activeFriendLinks);
       } catch (err) {
+        console.error('Failed to fetch friend links:', err);
         setError(err as Error);
       } finally {
         setLoading(false);

@@ -86,7 +86,7 @@ export function BlogSearchPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setData, setError, setLoading]);
 
   useEffect(() => {
     const q = searchParams.get('q');

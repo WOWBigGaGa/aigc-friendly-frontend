@@ -6,11 +6,21 @@ interface LazyImageProps {
   className?: string;
   style?: React.CSSProperties;
   placeholderStyle?: React.CSSProperties;
+  retryCount?: number;
 }
 
-export function LazyImage({ src, alt, className, style, placeholderStyle }: LazyImageProps) {
+export function LazyImage({
+  src,
+  alt,
+  className,
+  style,
+  placeholderStyle,
+  retryCount = 2,
+}: LazyImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
+  const [, setAttempts] = useState(0);
+  const [hasError, setHasError] = useState(false);
   const imgRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,10 +51,24 @@ export function LazyImage({ src, alt, className, style, placeholderStyle }: Lazy
 
   const handleLoad = () => {
     setIsLoaded(true);
+    setHasError(false);
   };
 
   const handleError = () => {
     setIsLoaded(false);
+    setAttempts((prev) => {
+      if (prev < retryCount) {
+        setTimeout(
+          () => {
+            setIsLoaded(false);
+          },
+          1000 * (prev + 1),
+        );
+        return prev + 1;
+      }
+      setHasError(true);
+      return prev;
+    });
   };
 
   return (
@@ -59,16 +83,13 @@ export function LazyImage({ src, alt, className, style, placeholderStyle }: Lazy
             ...placeholderStyle,
           }}
         >
-          <div
-            style={{
-              width: '20px',
-              height: '20px',
-              border: '2px solid var(--ant-color-border)',
-              borderTopColor: 'var(--ant-color-primary)',
-              borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite',
-            }}
-          />
+          {hasError ? (
+            <span style={{ color: 'var(--ant-color-text-tertiary)', fontSize: '12px' }}>
+              图片加载失败
+            </span>
+          ) : (
+            <div className="loading-spinner loading-spinner-sm" />
+          )}
         </div>
       )}
       {isInView && (
