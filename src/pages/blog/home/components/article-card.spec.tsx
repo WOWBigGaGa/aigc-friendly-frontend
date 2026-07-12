@@ -53,6 +53,7 @@ vi.mock('react-router', async (importOriginal) => {
   return {
     ...actual,
     useNavigate: () => mockNavigate,
+    MemoryRouter: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   };
 });
 
