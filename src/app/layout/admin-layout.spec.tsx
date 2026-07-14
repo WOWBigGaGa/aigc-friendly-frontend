@@ -119,6 +119,7 @@ vi.mock('@ant-design/icons', () => ({
 }));
 
 const mockNavigate = vi.fn();
+const mockLogout = vi.fn();
 
 vi.mock('react-router', async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
@@ -131,16 +132,27 @@ vi.mock('react-router', async (importOriginal) => {
   };
 });
 
+vi.mock('@/app/providers/use-admin-auth', () => ({
+  useAdminAuth: () => ({
+    isAuthenticated: true,
+    authChecked: true,
+    user: { id: '1', username: 'admin', email: 'admin@example.com', roles: ['admin'] },
+    login: vi.fn(),
+    logout: mockLogout,
+    accessToken: 'mock_token',
+  }),
+}));
+
 describe('AdminLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorage.setItem('admin_token', 'mock_token');
+    document.cookie = 'admin_token=mock_token';
   });
 
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
-    localStorage.removeItem('admin_token');
+    document.cookie = 'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
   });
 
   it('should render sidebar with navigation menu', () => {
@@ -190,7 +202,7 @@ describe('AdminLayout', () => {
     expect(sider.getAttribute('data-collapsed')).toBe('true');
   });
 
-  it('should remove token and navigate to login when logout is clicked', () => {
+  it('should call logout and navigate to login when logout is clicked', () => {
     render(
       <MemoryRouter>
         <AdminLayout />
@@ -201,7 +213,7 @@ describe('AdminLayout', () => {
     const logoutButton = buttons[1];
     fireEvent.click(logoutButton);
 
-    expect(localStorage.getItem('admin_token')).toBeNull();
+    expect(mockLogout).toHaveBeenCalled();
     expect(mockNavigate).toHaveBeenCalledWith('/admin/login');
   });
 

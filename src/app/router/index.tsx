@@ -8,6 +8,7 @@ import {
 } from 'react-router';
 
 import { AdminLayout, AppLayout, ArticleLayout, BlogLayout } from '@/app/layout';
+import { ProtectedRoute } from '@/app/router/protected-route';
 
 const BlogAboutPage = lazy(() =>
   import('@/pages/blog/about').then((mod) => ({ default: mod.BlogAboutPage })),
@@ -121,14 +122,6 @@ function sandboxPlaygroundLoader() {
     throw redirect('/');
   }
 
-  return null;
-}
-
-function adminAuthLoader() {
-  const token = localStorage.getItem('admin_token');
-  if (!token) {
-    throw redirect('/admin/login');
-  }
   return null;
 }
 
@@ -254,77 +247,85 @@ const router = createBrowserRouter([
       },
       {
         element: (
-          <Suspense fallback={<SuspenseFallback />}>
-            <AdminDashboardPage />
-          </Suspense>
+          <ProtectedRoute>
+            <Suspense fallback={<SuspenseFallback />}>
+              <AdminDashboardPage />
+            </Suspense>
+          </ProtectedRoute>
         ),
         path: 'dashboard',
-        loader: adminAuthLoader,
       },
       {
         children: [
           {
             element: (
-              <Suspense fallback={<SuspenseFallback />}>
-                <AdminArticleNewPage />
-              </Suspense>
+              <ProtectedRoute>
+                <Suspense fallback={<SuspenseFallback />}>
+                  <AdminArticleNewPage />
+                </Suspense>
+              </ProtectedRoute>
             ),
             path: 'new',
-            loader: adminAuthLoader,
           },
         ],
         element: (
-          <Suspense fallback={<SuspenseFallback />}>
-            <AdminArticlesPage />
-          </Suspense>
+          <ProtectedRoute>
+            <Suspense fallback={<SuspenseFallback />}>
+              <AdminArticlesPage />
+            </Suspense>
+          </ProtectedRoute>
         ),
         path: 'articles',
-        loader: adminAuthLoader,
       },
       {
         element: (
-          <Suspense fallback={<SuspenseFallback />}>
-            <AdminCategoriesPage />
-          </Suspense>
+          <ProtectedRoute>
+            <Suspense fallback={<SuspenseFallback />}>
+              <AdminCategoriesPage />
+            </Suspense>
+          </ProtectedRoute>
         ),
         path: 'categories',
-        loader: adminAuthLoader,
       },
       {
         element: (
-          <Suspense fallback={<SuspenseFallback />}>
-            <AdminTagsPage />
-          </Suspense>
+          <ProtectedRoute>
+            <Suspense fallback={<SuspenseFallback />}>
+              <AdminTagsPage />
+            </Suspense>
+          </ProtectedRoute>
         ),
         path: 'tags',
-        loader: adminAuthLoader,
       },
       {
         element: (
-          <Suspense fallback={<SuspenseFallback />}>
-            <AdminCommentsPage />
-          </Suspense>
+          <ProtectedRoute>
+            <Suspense fallback={<SuspenseFallback />}>
+              <AdminCommentsPage />
+            </Suspense>
+          </ProtectedRoute>
         ),
         path: 'comments',
-        loader: adminAuthLoader,
       },
       {
         element: (
-          <Suspense fallback={<SuspenseFallback />}>
-            <AdminFilesPage />
-          </Suspense>
+          <ProtectedRoute>
+            <Suspense fallback={<SuspenseFallback />}>
+              <AdminFilesPage />
+            </Suspense>
+          </ProtectedRoute>
         ),
         path: 'files',
-        loader: adminAuthLoader,
       },
       {
         element: (
-          <Suspense fallback={<SuspenseFallback />}>
-            <AdminSettingsPage />
-          </Suspense>
+          <ProtectedRoute>
+            <Suspense fallback={<SuspenseFallback />}>
+              <AdminSettingsPage />
+            </Suspense>
+          </ProtectedRoute>
         ),
         path: 'settings',
-        loader: adminAuthLoader,
       },
     ],
     element: <AdminLayout />,

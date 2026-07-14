@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AdminLoginPage } from '../login';
 
 export const mockNavigate = vi.fn();
+const mockLogin = vi.fn();
 
 vi.mock('react-router', async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
@@ -26,14 +27,23 @@ vi.mock('antd', async (importOriginal) => {
       style,
       children,
       onClick,
+      loading,
     }: {
       type?: string;
       htmlType?: 'submit' | 'reset' | 'button';
       style?: React.CSSProperties;
       children?: React.ReactNode;
       onClick?: () => void;
+      loading?: boolean;
     }) => (
-      <button data-testid="button" data-type={type} type={htmlType} style={style} onClick={onClick}>
+      <button
+        data-testid="button"
+        data-type={type}
+        type={htmlType}
+        style={style}
+        onClick={onClick}
+        disabled={loading}
+      >
         {children}
       </button>
     ),
@@ -137,15 +147,32 @@ vi.mock('antd', async (importOriginal) => {
   };
 });
 
+vi.mock('@/app/providers/use-admin-auth', () => ({
+  useAdminAuth: () => ({
+    isAuthenticated: false,
+    authChecked: true,
+    user: null,
+    login: mockLogin,
+    logout: vi.fn(),
+    accessToken: null,
+  }),
+}));
+
+vi.mock('@/shared/graphql/request', () => ({
+  executeGraphQL: vi.fn(),
+}));
+
+import { executeGraphQL } from '@/shared/graphql/request';
+
 describe('AdminLoginPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorage.removeItem('admin_token');
+    document.cookie = 'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
   });
 
   afterEach(() => {
     cleanup();
-    localStorage.removeItem('admin_token');
+    document.cookie = 'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
   });
 
   it('should render login form with username and password fields', () => {
@@ -162,6 +189,13 @@ describe('AdminLoginPage', () => {
   });
 
   it('should successfully login with correct credentials', async () => {
+    (executeGraphQL as ReturnType<typeof vi.fn>).mockResolvedValue({
+      adminLogin: {
+        token: 'mock_token',
+        user: { id: '1', username: 'admin', email: 'admin@example.com', roles: ['admin'] },
+      },
+    });
+
     render(
       <MemoryRouter>
         <AdminLoginPage />
@@ -178,12 +212,21 @@ describe('AdminLoginPage', () => {
     fireEvent.submit(screen.getByTestId('form'));
 
     await waitFor(() => {
-      expect(localStorage.getItem('admin_token')).toBe('mock_token');
+      expect(mockLogin).toHaveBeenCalledWith('mock_token', {
+        id: '1',
+        username: 'admin',
+        email: 'admin@example.com',
+        roles: ['admin'],
+      });
       expect(mockNavigate).toHaveBeenCalledWith('/admin/dashboard');
     });
   });
 
   it('should show error with incorrect credentials', async () => {
+    (executeGraphQL as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error('Authentication failed'),
+    );
+
     render(
       <MemoryRouter>
         <AdminLoginPage />
@@ -200,7 +243,7 @@ describe('AdminLoginPage', () => {
     fireEvent.submit(screen.getByTestId('form'));
 
     await waitFor(() => {
-      expect(localStorage.getItem('admin_token')).toBeNull();
+      expect(mockLogin).not.toHaveBeenCalled();
       expect(mockNavigate).not.toHaveBeenCalled();
     });
   });
@@ -218,7 +261,7 @@ describe('AdminLoginPage', () => {
     fireEvent.submit(screen.getByTestId('form'));
 
     await waitFor(() => {
-      expect(localStorage.getItem('admin_token')).toBeNull();
+      expect(mockLogin).not.toHaveBeenCalled();
     });
   });
 
@@ -236,7 +279,7 @@ describe('AdminLoginPage', () => {
     fireEvent.submit(screen.getByTestId('form'));
 
     await waitFor(() => {
-      expect(localStorage.getItem('admin_token')).toBeNull();
+      expect(mockLogin).not.toHaveBeenCalled();
     });
   });
 });

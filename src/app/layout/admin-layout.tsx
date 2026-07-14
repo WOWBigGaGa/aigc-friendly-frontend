@@ -1,5 +1,3 @@
-// src/app/layout/admin-layout.tsx
-
 import {
   BarChartOutlined,
   FileTextOutlined,
@@ -17,6 +15,10 @@ import { Button, Layout, Menu, Tooltip } from 'antd';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router';
+
+import { useAdminAuth } from '@/app/providers/use-admin-auth';
+
+import styles from './admin-layout.module.css';
 
 const { Header, Sider, Content } = Layout;
 
@@ -38,14 +40,15 @@ export function AdminLayout({ children }: AdminLayoutProps = {}) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAdminAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem('admin_token');
+    logout();
     navigate('/admin/login');
   };
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout className={styles.adminLayout}>
       <Sider
         collapsible
         collapsed={collapsed}
@@ -53,10 +56,8 @@ export function AdminLayout({ children }: AdminLayoutProps = {}) {
         theme="dark"
         width={220}
       >
-        <div className="admin-logo">
-          <h1 style={{ color: '#fff', fontSize: '18px', textAlign: 'center', margin: '16px 0' }}>
-            管理后台
-          </h1>
+        <div className={styles.adminLogo}>
+          <h1 className={styles.adminLogoTitle}>管理后台</h1>
         </div>
         <Menu
           defaultSelectedKeys={['/admin/dashboard']}
@@ -67,24 +68,24 @@ export function AdminLayout({ children }: AdminLayoutProps = {}) {
         />
       </Sider>
       <Layout>
-        <Header style={{ padding: '0 16px', background: '#fff', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Button
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={() => setCollapsed(!collapsed)}
-            style={{ marginRight: '16px' }}
-          />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <Header className={styles.adminHeader}>
+          <div className={styles.adminHeaderLeft}>
+            <Button
+              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={() => setCollapsed(!collapsed)}
+              style={{ marginRight: '16px' }}
+            />
+          </div>
+          <div className={styles.adminHeaderRight}>
             <Tooltip title="用户信息">
-              <UserOutlined style={{ fontSize: '18px', color: '#666' }} />
+              <UserOutlined className={styles.adminHeaderUserIcon} />
             </Tooltip>
             <Tooltip title="退出登录">
               <Button icon={<LogoutOutlined />} onClick={handleLogout} danger />
             </Tooltip>
           </div>
         </Header>
-        <Content
-          style={{ margin: '24px 16px', padding: '24px', background: '#f5f5f5', minHeight: '280px' }}
-        >
+        <Content className={styles.adminContent}>
           {children ?? <Outlet />}
         </Content>
       </Layout>

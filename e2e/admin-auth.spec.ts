@@ -6,21 +6,15 @@ test.describe('Admin Authentication', () => {
   test('should redirect to login page when not authenticated', async () => {
     const browser = await chromium.launch();
     const context = await browser.newContext();
-    await context.addInitScript(() => {
-      localStorage.removeItem('admin_token');
-    });
 
     const page = await context.newPage();
     await page.goto('/admin/dashboard', { waitUntil: 'domcontentloaded' });
 
     await page.waitForTimeout(3000);
-    const token = await page.evaluate(() => localStorage.getItem('admin_token'));
-    console.log('Test 1 Token:', token);
+    const token = await page.evaluate(() => document.cookie);
+    console.log('Test 1 Cookie:', token);
     console.log('Test 1 URL:', page.url());
 
-    if (!page.url().includes('/admin/login')) {
-      await page.waitForNavigation({ timeout: 15000 });
-    }
     expect(page.url()).toContain('/admin/login');
 
     await browser.close();
@@ -46,6 +40,21 @@ test.describe('Admin Authentication', () => {
     const browser = await chromium.launch();
     const context = await browser.newContext();
 
+    context.route('**/graphql', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: {
+            adminLogin: {
+              token: 'mock_token',
+              user: { id: '1', username: 'admin', email: 'admin@example.com', roles: ['admin'] },
+            },
+          },
+        }),
+      });
+    });
+
     const page = await context.newPage();
     await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
 
@@ -68,6 +77,16 @@ test.describe('Admin Authentication', () => {
   test('should stay on login page with incorrect credentials', async () => {
     const browser = await chromium.launch();
     const context = await browser.newContext();
+
+    context.route('**/graphql', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          errors: [{ message: 'Invalid credentials' }],
+        }),
+      });
+    });
 
     const page = await context.newPage();
     await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
@@ -92,15 +111,16 @@ test.describe('Admin Authentication', () => {
     const browser = await chromium.launch();
     const context = await browser.newContext();
     await context.addInitScript(() => {
-      localStorage.setItem('admin_token', 'mock_token');
+      document.cookie = 'admin_token=mock_token; path=/';
+      localStorage.setItem('admin_user', JSON.stringify({ id: '1', username: 'admin', email: 'admin@example.com', roles: ['admin'] }));
     });
 
     const page = await context.newPage();
     await page.goto('/admin/dashboard', { waitUntil: 'domcontentloaded' });
 
     await page.waitForTimeout(3000);
-    const token = await page.evaluate(() => localStorage.getItem('admin_token'));
-    console.log('Test 5 Token:', token);
+    const cookie = await page.evaluate(() => document.cookie);
+    console.log('Test 5 Cookie:', cookie);
     console.log('Test 5 URL:', page.url());
 
     expect(page.url()).toContain('/admin/dashboard');
