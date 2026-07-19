@@ -73,6 +73,22 @@ export const ADMIN_ALL_COMMENTS = `
   }
 `;
 
+export const ADMIN_FILES = `
+  query AdminFiles($page: Int, $limit: Int) {
+    files(page: $page, limit: $limit) {
+      id
+      originalName
+      storedName
+      path
+      url
+      mimeType
+      size
+      uploadedBy
+      createdAt
+    }
+  }
+`;
+
 export const ADMIN_ARTICLE_BY_ID = `
   query AdminArticleById($id: String!) {
     article(id: $id) {

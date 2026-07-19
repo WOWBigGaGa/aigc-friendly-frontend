@@ -6,9 +6,10 @@ import { CommentResolver } from './resolvers/comment.resolver';
 import { CategoryResolver } from './resolvers/category.resolver';
 import { TagResolver } from './resolvers/tag.resolver';
 import { DashboardResolver } from './resolvers/dashboard.resolver';
+import { FileResolver } from './resolvers/file.resolver';
 
 @Module({
   imports: [BlogModule, BlogUsecasesModule],
-  providers: [ArticleResolver, CommentResolver, CategoryResolver, TagResolver, DashboardResolver],
+  providers: [ArticleResolver, CommentResolver, CategoryResolver, TagResolver, DashboardResolver, FileResolver],
 })
 export class BlogGraphQLModule {}

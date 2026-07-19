@@ -4,6 +4,7 @@ import { ArticleRepository } from '@src/modules/blog/repositories/article.reposi
 import { CategoryRepository } from '@src/modules/blog/repositories/category.repository';
 import { TagRepository } from '@src/modules/blog/repositories/tag.repository';
 import { CommentRepository } from '@src/modules/blog/repositories/comment.repository';
+import { FileRepository } from '@src/modules/blog/repositories/file.repository';
 import { ArticleQueryService } from '@src/modules/blog/queries/article.query.service';
 import { CommentQueryService } from '@src/modules/blog/queries/comment.query.service';
 import { TRANSACTION_RUNNER } from '@src/usecases/common/ports/transaction-runner.contract';
@@ -21,6 +22,7 @@ import { UpdateCommentStatusUsecase } from './update-comment-status.usecase';
 import { DeleteCommentUsecase } from './delete-comment.usecase';
 import { ApproveCommentUsecase } from './approve-comment.usecase';
 import { RejectCommentUsecase } from './reject-comment.usecase';
+import { DeleteFileUsecase } from './delete-file.usecase';
 import { ArticleStatus, CommentStatus } from '@src/modules/blog/blog.types';
 
 describe('Blog Usecases', () => {
@@ -1790,6 +1792,90 @@ describe('Blog Usecases', () => {
       await expect(usecase.execute({ id: 'comment-1', session: userSession })).rejects.toThrow(
         DomainError,
       );
+    });
+  });
+
+  describe('DeleteFileUsecase', () => {
+    let usecase: DeleteFileUsecase;
+    let fileRepository: jest.Mocked<FileRepository>;
+
+    beforeEach(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          DeleteFileUsecase,
+          { provide: FileRepository, useValue: { findById: jest.fn(), delete: jest.fn() } },
+          { provide: TRANSACTION_RUNNER, useValue: mockTransactionRunner },
+        ],
+      }).compile();
+
+      usecase = module.get<DeleteFileUsecase>(DeleteFileUsecase);
+      fileRepository = module.get(FileRepository);
+    });
+
+    it('should delete file successfully as admin', async () => {
+      fileRepository.findById.mockResolvedValue({
+        id: 'file-1',
+        originalName: 'test-image.jpg',
+        storedName: '1234567890-test-image.jpg',
+        path: './uploads/1234567890-test-image.jpg',
+        url: 'http://localhost:3000/uploads/1234567890-test-image.jpg',
+        mimeType: 'image/jpeg',
+        size: 1024000,
+        uploadedBy: '1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      await usecase.execute({ id: 'file-1', session: adminSession });
+
+      expect(fileRepository.delete).toHaveBeenCalledWith('file-1', expect.anything());
+    });
+
+    it('should throw error when file not found', async () => {
+      fileRepository.findById.mockResolvedValue(null);
+
+      await expect(usecase.execute({ id: 'file-1', session: adminSession })).rejects.toThrow(
+        DomainError,
+      );
+    });
+
+    it('should throw error when non-admin user tries to delete', async () => {
+      await expect(usecase.execute({ id: 'file-1', session: userSession })).rejects.toThrow(
+        DomainError,
+      );
+      expect(fileRepository.findById).not.toHaveBeenCalled();
+    });
+
+    it('should throw error when user with empty roles tries to delete', async () => {
+      await expect(usecase.execute({ id: 'file-1', session: emptySession })).rejects.toThrow(
+        DomainError,
+      );
+      expect(fileRepository.findById).not.toHaveBeenCalled();
+    });
+
+    it('should delete file within existing transaction', async () => {
+      const mockTransactionContext = {} as any;
+      fileRepository.findById.mockResolvedValue({
+        id: 'file-1',
+        originalName: 'test-image.jpg',
+        storedName: '1234567890-test-image.jpg',
+        path: './uploads/1234567890-test-image.jpg',
+        url: 'http://localhost:3000/uploads/1234567890-test-image.jpg',
+        mimeType: 'image/jpeg',
+        size: 1024000,
+        uploadedBy: '1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      await usecase.execute({
+        id: 'file-1',
+        session: adminSession,
+        transactionContext: mockTransactionContext,
+      });
+
+      expect(fileRepository.delete).toHaveBeenCalledWith('file-1', mockTransactionContext);
+      expect(mockTransactionRunner.run).not.toHaveBeenCalled();
     });
   });
 });

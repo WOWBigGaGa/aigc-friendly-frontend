@@ -54,6 +54,18 @@ export interface CommentItem {
   createdAt: string;
 }
 
+export interface FileItem {
+  id: string;
+  originalName: string;
+  storedName: string;
+  path: string;
+  url: string;
+  mimeType: string;
+  size: number;
+  uploadedBy: string;
+  createdAt: string;
+}
+
 export interface PaginatedResult<T> {
   items: T[];
   total: number;

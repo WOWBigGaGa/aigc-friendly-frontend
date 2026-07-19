@@ -56,6 +56,23 @@ export const ADMIN_REPLY_COMMENT = `
   }
 `;
 
+export const ADMIN_UPLOAD_FILE = `
+  mutation AdminUploadFile($filename: String!, $content: String!, $mimeType: String!) {
+    uploadFile(filename: $filename, content: $content, mimeType: $mimeType) {
+      id
+      originalName
+      url
+      size
+    }
+  }
+`;
+
+export const ADMIN_DELETE_FILE = `
+  mutation AdminDeleteFile($id: String!) {
+    deleteFile(id: $id)
+  }
+`;
+
 export const ADMIN_CREATE_ARTICLE = `
   mutation AdminCreateArticle($input: CreateArticleInput!) {
     createArticle(input: $input) {
