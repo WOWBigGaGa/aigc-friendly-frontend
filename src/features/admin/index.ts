@@ -6,6 +6,7 @@ export {
   ADMIN_LOGIN,
   ADMIN_ME,
   ADMIN_REJECT_COMMENT,
+  ADMIN_REPLY_COMMENT,
   ADMIN_TOGGLE_ARTICLE_STATUS,
   ADMIN_UPDATE_ARTICLE,
 } from './infrastructure/mutations';

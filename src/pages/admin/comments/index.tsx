@@ -1,6 +1,18 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { CheckOutlined, CloseOutlined, DeleteOutlined } from '@ant-design/icons';
-import { Button, message, Popconfirm, Space, Table, Tag, Typography } from 'antd';
+import { useCallback, useEffect, useState } from 'react';
+import { CheckOutlined, CloseOutlined, DeleteOutlined, MessageOutlined } from '@ant-design/icons';
+import {
+  Button,
+  Form,
+  Input,
+  message,
+  Modal,
+  Popconfirm,
+  Select,
+  Space,
+  Table,
+  Tag,
+  Typography,
+} from 'antd';
 import dayjs from 'dayjs';
 
 import {
@@ -8,13 +20,16 @@ import {
   ADMIN_APPROVE_COMMENT,
   ADMIN_DELETE_COMMENT,
   ADMIN_REJECT_COMMENT,
+  ADMIN_REPLY_COMMENT,
   type CommentItem,
   type PaginatedResult,
 } from '@/features/admin';
 
+import { isGraphQLIngressError } from '@/shared/graphql/errors';
 import { executeGraphQL } from '@/shared/graphql/request';
 
 const { Title } = Typography;
+const { TextArea } = Input;
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   PENDING: { label: '待审核', color: 'orange' },
@@ -22,37 +37,52 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   REJECTED: { label: '已驳回', color: 'red' },
 };
 
+const STATUS_OPTIONS = [
+  { value: '', label: '全部' },
+  { value: 'PENDING', label: '待审核' },
+  { value: 'APPROVED', label: '已通过' },
+  { value: 'REJECTED', label: '已驳回' },
+];
+
 export function AdminCommentsPage() {
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-
-  const handleApproveRef = useRef<((id: string) => void) | null>(null);
-  const handleRejectRef = useRef<((id: string) => void) | null>(null);
-  const handleDeleteRef = useRef<((id: string) => void) | null>(null);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [replyModalVisible, setReplyModalVisible] = useState(false);
+  const [replyingComment, setReplyingComment] = useState<CommentItem | null>(null);
+  const [replyForm] = Form.useForm();
 
   useEffect(() => {
     fetchComments();
-  }, [currentPage]);
+  }, [currentPage, statusFilter]);
 
   const fetchComments = useCallback(async () => {
     setLoading(true);
     try {
       const result = await executeGraphQL<
         { allComments: PaginatedResult<CommentItem> },
-        { page: number; limit: number }
-      >(ADMIN_ALL_COMMENTS, { page: currentPage, limit: 10 });
+        { page: number; limit: number; status?: string }
+      >(ADMIN_ALL_COMMENTS, {
+        page: currentPage,
+        limit: 10,
+        ...(statusFilter && { status: statusFilter }),
+      });
 
       setComments(result.allComments.items);
       setTotal(result.allComments.total);
     } catch (error) {
       console.error('Failed to fetch comments:', error);
+      const errorMessage = isGraphQLIngressError(error)
+        ? error.userMessage
+        : '加载评论失败，请稍后重试';
+      message.error(errorMessage);
       setComments([]);
     } finally {
       setLoading(false);
     }
-  }, [currentPage]);
+  }, [currentPage, statusFilter]);
 
   const handleApprove = useCallback(
     async (id: string) => {
@@ -65,7 +95,10 @@ export function AdminCommentsPage() {
         fetchComments();
       } catch (error) {
         console.error('Failed to approve comment:', error);
-        message.error('操作失败');
+        const errorMessage = isGraphQLIngressError(error)
+          ? error.userMessage
+          : '操作失败，请稍后重试';
+        message.error(errorMessage);
       }
     },
     [fetchComments],
@@ -82,7 +115,10 @@ export function AdminCommentsPage() {
         fetchComments();
       } catch (error) {
         console.error('Failed to reject comment:', error);
-        message.error('操作失败');
+        const errorMessage = isGraphQLIngressError(error)
+          ? error.userMessage
+          : '操作失败，请稍后重试';
+        message.error(errorMessage);
       }
     },
     [fetchComments],
@@ -98,15 +134,44 @@ export function AdminCommentsPage() {
         fetchComments();
       } catch (error) {
         console.error('Failed to delete comment:', error);
-        message.error('操作失败');
+        const errorMessage = isGraphQLIngressError(error)
+          ? error.userMessage
+          : '删除失败，请稍后重试';
+        message.error(errorMessage);
       }
     },
     [fetchComments],
   );
 
-  handleApproveRef.current = handleApprove;
-  handleRejectRef.current = handleReject;
-  handleDeleteRef.current = handleDelete;
+  const handleReply = useCallback((comment: CommentItem) => {
+    setReplyingComment(comment);
+    setReplyModalVisible(true);
+    replyForm.resetFields();
+  }, []);
+
+  const handleSubmitReply = useCallback(
+    async (values: { content: string }) => {
+      if (!replyingComment) return;
+
+      try {
+        await executeGraphQL<
+          { replyComment: { id: string; content: string } },
+          { id: string; content: string }
+        >(ADMIN_REPLY_COMMENT, { id: replyingComment.id, content: values.content });
+        message.success('回复成功');
+        setReplyModalVisible(false);
+        setReplyingComment(null);
+        fetchComments();
+      } catch (error) {
+        console.error('Failed to reply comment:', error);
+        const errorMessage = isGraphQLIngressError(error)
+          ? error.userMessage
+          : '回复失败，请稍后重试';
+        message.error(errorMessage);
+      }
+    },
+    [replyingComment, fetchComments],
+  );
 
   const columns = [
     {
@@ -157,7 +222,7 @@ export function AdminCommentsPage() {
                 type="primary"
                 size="small"
                 icon={<CheckOutlined />}
-                onClick={() => handleApproveRef.current?.(record.id)}
+                onClick={() => handleApprove(record.id)}
               >
                 通过
               </Button>
@@ -165,15 +230,20 @@ export function AdminCommentsPage() {
                 size="small"
                 danger
                 icon={<CloseOutlined />}
-                onClick={() => handleRejectRef.current?.(record.id)}
+                onClick={() => handleReject(record.id)}
               >
                 驳回
               </Button>
             </>
           )}
+          {record.status === 'APPROVED' && (
+            <Button size="small" icon={<MessageOutlined />} onClick={() => handleReply(record)}>
+              回复
+            </Button>
+          )}
           <Popconfirm
             title="确定删除该评论？"
-            onConfirm={() => handleDeleteRef.current?.(record.id)}
+            onConfirm={() => handleDelete(record.id)}
             okText="确定"
             cancelText="取消"
           >
@@ -191,9 +261,29 @@ export function AdminCommentsPage() {
     setCurrentPage(page);
   };
 
+  const handleStatusChange = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
+
   return (
     <div>
-      <Title level={2}>评论管理</Title>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '24px',
+        }}
+      >
+        <Title level={2}>评论管理</Title>
+        <Select
+          value={statusFilter}
+          onChange={handleStatusChange}
+          options={STATUS_OPTIONS}
+          style={{ width: 150 }}
+        />
+      </div>
 
       <Table
         columns={columns}
@@ -208,6 +298,38 @@ export function AdminCommentsPage() {
           showSizeChanger: false,
         }}
       />
+
+      <Modal
+        title={`回复评论 - ${replyingComment?.authorName}`}
+        visible={replyModalVisible}
+        onCancel={() => {
+          setReplyModalVisible(false);
+          setReplyingComment(null);
+        }}
+        footer={null}
+      >
+        <div style={{ marginBottom: '16px' }}>
+          <Typography.Text strong>评论内容：</Typography.Text>
+          <Typography.Text type="secondary">{replyingComment?.content}</Typography.Text>
+        </div>
+        <Form form={replyForm} layout="vertical" onFinish={handleSubmitReply}>
+          <Form.Item
+            name="content"
+            label="回复内容"
+            rules={[
+              { required: true, message: '请输入回复内容' },
+              { max: 500, message: '回复内容不能超过500个字符' },
+            ]}
+          >
+            <TextArea placeholder="请输入回复内容" rows={4} />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              提交回复
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }

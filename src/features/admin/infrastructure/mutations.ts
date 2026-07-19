@@ -47,6 +47,15 @@ export const ADMIN_DELETE_COMMENT = `
   }
 `;
 
+export const ADMIN_REPLY_COMMENT = `
+  mutation AdminReplyComment($id: String!, $content: String!) {
+    replyComment(id: $id, content: $content) {
+      id
+      content
+    }
+  }
+`;
+
 export const ADMIN_CREATE_ARTICLE = `
   mutation AdminCreateArticle($input: CreateArticleInput!) {
     createArticle(input: $input) {

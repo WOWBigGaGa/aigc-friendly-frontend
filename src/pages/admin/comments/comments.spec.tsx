@@ -97,10 +97,100 @@ vi.mock('antd', async (importOriginal) => {
     Space: ({ children }: { children?: React.ReactNode }) => <span>{children}</span>,
     Typography: {
       Title: ({ children }: { children?: React.ReactNode }) => <h2>{children}</h2>,
+      Text: ({ children, type }: { children?: React.ReactNode; type?: string }) => (
+        <span data-testid={`text-${type || 'default'}`}>{children}</span>
+      ),
     },
     message: {
       success: vi.fn(),
       error: vi.fn(),
+    },
+    Select: ({
+      value,
+      onChange,
+      options,
+    }: {
+      value?: string;
+      onChange?: (value: string) => void;
+      options?: Array<{ value: string; label: string }>;
+    }) => (
+      <select
+        data-testid="status-filter"
+        value={value}
+        onChange={(e) => onChange?.(e.target.value)}
+      >
+        {options?.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    ),
+    Modal: ({
+      title,
+      visible,
+      onCancel,
+      children,
+    }: {
+      title?: string;
+      visible?: boolean;
+      onCancel?: () => void;
+      children?: React.ReactNode;
+    }) =>
+      visible ? (
+        <div data-testid="reply-modal">
+          <div data-testid="modal-title">{title}</div>
+          {children}
+          <button data-testid="modal-cancel" onClick={onCancel}>
+            关闭
+          </button>
+        </div>
+      ) : null,
+    Form: Object.assign(
+      ({
+        onFinish,
+        children,
+      }: {
+        onFinish?: (values: Record<string, unknown>) => void;
+        children?: React.ReactNode;
+      }) => (
+        <form
+          data-testid="reply-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onFinish?.({ content: (e.target as HTMLFormElement).querySelector('textarea')?.value });
+          }}
+        >
+          {children}
+        </form>
+      ),
+      {
+        useForm: () => [
+          {
+            resetFields: vi.fn(),
+            setFieldsValue: vi.fn(),
+          },
+        ],
+        Item: ({
+          label,
+          name,
+          children,
+        }: {
+          label?: string;
+          name?: string;
+          children?: React.ReactNode;
+        }) => (
+          <div data-testid={`form-item-${name}`}>
+            {label && <label>{label}</label>}
+            {children}
+          </div>
+        ),
+      },
+    ),
+    Input: {
+      TextArea: ({ placeholder, rows }: { placeholder?: string; rows?: number }) => (
+        <textarea data-testid="reply-textarea" placeholder={placeholder} rows={rows} />
+      ),
     },
   };
 });
@@ -109,6 +199,7 @@ vi.mock('@ant-design/icons', () => ({
   CheckOutlined: () => <span data-testid="icon-check" />,
   CloseOutlined: () => <span data-testid="icon-close" />,
   DeleteOutlined: () => <span data-testid="icon-delete" />,
+  MessageOutlined: () => <span data-testid="icon-message" />,
 }));
 
 vi.mock('@/shared/graphql/request', () => ({
@@ -460,7 +551,7 @@ describe('AdminCommentsPage', () => {
     });
 
     await waitFor(() => {
-      expect(mockMessage.error).toHaveBeenCalledWith('操作失败');
+      expect(mockMessage.error).toHaveBeenCalledWith('操作失败，请稍后重试');
     });
   });
 
@@ -501,7 +592,198 @@ describe('AdminCommentsPage', () => {
     });
 
     await waitFor(() => {
-      expect(mockMessage.error).toHaveBeenCalledWith('操作失败');
+      expect(mockMessage.error).toHaveBeenCalledWith('删除失败，请稍后重试');
+    });
+  });
+
+  it('should show reply button for approved comments', async () => {
+    (executeGraphQL as ReturnType<typeof vi.fn>).mockResolvedValue({
+      allComments: {
+        items: [
+          {
+            id: 'comment-1',
+            articleId: 'article-1',
+            authorName: '张三',
+            authorEmail: 'zhangsan@example.com',
+            content: '很好的文章！',
+            status: 'APPROVED',
+            createdAt: '2024-01-15T10:30:00Z',
+          },
+        ],
+        total: 1,
+        page: 1,
+        pageSize: 10,
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <AdminCommentsPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('回复')).toBeInTheDocument();
+    });
+  });
+
+  it('should hide reply button for pending and rejected comments', async () => {
+    (executeGraphQL as ReturnType<typeof vi.fn>).mockResolvedValue({
+      allComments: {
+        items: [
+          {
+            id: 'comment-1',
+            articleId: 'article-1',
+            authorName: '张三',
+            authorEmail: 'zhangsan@example.com',
+            content: '很好的文章！',
+            status: 'PENDING',
+            createdAt: '2024-01-15T10:30:00Z',
+          },
+          {
+            id: 'comment-2',
+            articleId: 'article-2',
+            authorName: '李四',
+            authorEmail: 'lisi@example.com',
+            content: '学习了',
+            status: 'REJECTED',
+            createdAt: '2024-01-16T10:30:00Z',
+          },
+        ],
+        total: 2,
+        page: 1,
+        pageSize: 10,
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <AdminCommentsPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('回复')).not.toBeInTheDocument();
+    });
+  });
+
+  it('should call reply mutation and show success message', async () => {
+    (executeGraphQL as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        allComments: {
+          items: [
+            {
+              id: 'comment-1',
+              articleId: 'article-1',
+              authorName: '张三',
+              authorEmail: 'zhangsan@example.com',
+              content: '很好的文章！',
+              status: 'APPROVED',
+              createdAt: '2024-01-15T10:30:00Z',
+            },
+          ],
+          total: 1,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+      .mockResolvedValueOnce({
+        replyComment: { id: 'comment-1', content: '感谢您的评论！' },
+      })
+      .mockResolvedValueOnce({
+        allComments: {
+          items: [],
+          total: 0,
+          page: 1,
+          pageSize: 10,
+        },
+      });
+
+    const { message } = await import('antd');
+    const mockMessage = message as unknown as MockMessage;
+
+    render(
+      <MemoryRouter>
+        <AdminCommentsPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('回复')).toBeInTheDocument();
+    });
+
+    const replyButton = screen.getByText('回复');
+    fireEvent.click(replyButton);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('reply-modal')).toBeInTheDocument();
+    });
+
+    const textArea = screen.getByTestId('reply-textarea');
+    fireEvent.change(textArea, { target: { value: '感谢您的评论！' } });
+
+    const submitButton = screen.getByText('提交回复');
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(executeGraphQL).toHaveBeenCalledWith(expect.stringContaining('replyComment'), {
+        id: 'comment-1',
+        content: '感谢您的评论！',
+      });
+      expect(mockMessage.success).toHaveBeenCalledWith('回复成功');
+    });
+  });
+
+  it('should show error message when reply fails', async () => {
+    (executeGraphQL as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        allComments: {
+          items: [
+            {
+              id: 'comment-1',
+              articleId: 'article-1',
+              authorName: '张三',
+              authorEmail: 'zhangsan@example.com',
+              content: '很好的文章！',
+              status: 'APPROVED',
+              createdAt: '2024-01-15T10:30:00Z',
+            },
+          ],
+          total: 1,
+          page: 1,
+          pageSize: 10,
+        },
+      })
+      .mockRejectedValueOnce(new Error('API error'));
+
+    const { message } = await import('antd');
+    const mockMessage = message as unknown as MockMessage;
+
+    render(
+      <MemoryRouter>
+        <AdminCommentsPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('回复')).toBeInTheDocument();
+    });
+
+    const replyButton = screen.getByText('回复');
+    fireEvent.click(replyButton);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('reply-modal')).toBeInTheDocument();
+    });
+
+    const textArea = screen.getByTestId('reply-textarea');
+    fireEvent.change(textArea, { target: { value: '感谢您的评论！' } });
+
+    const submitButton = screen.getByText('提交回复');
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(mockMessage.error).toHaveBeenCalledWith('回复失败，请稍后重试');
     });
   });
 });
