@@ -47,6 +47,9 @@ const AdminArticlesPage = lazy(() =>
 const AdminArticleNewPage = lazy(() =>
   import('@/pages/admin/articles/new').then((mod) => ({ default: mod.AdminArticleNewPage })),
 );
+const AdminArticleEditPage = lazy(() =>
+  import('@/pages/admin/articles/[id]/edit').then((mod) => ({ default: mod.AdminArticleEditPage })),
+);
 const AdminCategoriesPage = lazy(() =>
   import('@/pages/admin/categories').then((mod) => ({ default: mod.AdminCategoriesPage })),
 );
@@ -266,6 +269,16 @@ const router = createBrowserRouter([
               </ProtectedRoute>
             ),
             path: 'new',
+          },
+          {
+            element: (
+              <ProtectedRoute>
+                <Suspense fallback={<SuspenseFallback />}>
+                  <AdminArticleEditPage />
+                </Suspense>
+              </ProtectedRoute>
+            ),
+            path: ':id/edit',
           },
         ],
         element: (

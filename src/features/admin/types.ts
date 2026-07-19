@@ -18,6 +18,31 @@ export interface ArticleItem {
   category: { id: string; name: string } | null;
 }
 
+export interface ArticleView {
+  id: string;
+  title: string;
+  content: string;
+  summary: string;
+  coverImage: string;
+  status: string;
+  categoryId: string;
+  authorId: string;
+  viewCount: number;
+  likeCount: number;
+  isPinned: boolean;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  parentId: string;
+}
+
 export interface CommentItem {
   id: string;
   articleId: string;

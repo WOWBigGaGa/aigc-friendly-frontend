@@ -46,3 +46,40 @@ export const ADMIN_DELETE_COMMENT = `
     deleteComment(id: $id)
   }
 `;
+
+export const ADMIN_CREATE_ARTICLE = `
+  mutation AdminCreateArticle($input: CreateArticleInput!) {
+    createArticle(input: $input) {
+      id
+      title
+      status
+      publishedAt
+    }
+  }
+`;
+
+export const ADMIN_UPDATE_ARTICLE = `
+  mutation AdminUpdateArticle($id: String!, $input: UpdateArticleInput!) {
+    updateArticle(id: $id, input: $input) {
+      id
+      title
+      status
+      publishedAt
+    }
+  }
+`;
+
+export const ADMIN_DELETE_ARTICLE = `
+  mutation AdminDeleteArticle($id: String!) {
+    deleteArticle(id: $id)
+  }
+`;
+
+export const ADMIN_TOGGLE_ARTICLE_STATUS = `
+  mutation AdminToggleArticleStatus($id: String!, $status: ArticleStatus!) {
+    toggleArticleStatus(id: $id, status: $status) {
+      id
+      status
+    }
+  }
+`;
