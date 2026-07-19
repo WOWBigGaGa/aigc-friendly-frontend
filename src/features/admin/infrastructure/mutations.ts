@@ -22,3 +22,27 @@ export const ADMIN_ME = `
     }
   }
 `;
+
+export const ADMIN_APPROVE_COMMENT = `
+  mutation AdminApproveComment($id: String!) {
+    approveComment(id: $id) {
+      id
+      status
+    }
+  }
+`;
+
+export const ADMIN_REJECT_COMMENT = `
+  mutation AdminRejectComment($id: String!) {
+    rejectComment(id: $id) {
+      id
+      status
+    }
+  }
+`;
+
+export const ADMIN_DELETE_COMMENT = `
+  mutation AdminDeleteComment($id: String!) {
+    deleteComment(id: $id)
+  }
+`;

@@ -52,3 +52,23 @@ export const ADMIN_RECENT_ARTICLES = `
     }
   }
 `;
+
+export const ADMIN_ALL_COMMENTS = `
+  query AdminAllComments($page: Int, $limit: Int) {
+    allComments(pagination: { page: $page, limit: $limit }) {
+      items {
+        id
+        articleId
+        articleTitle
+        authorName
+        authorEmail
+        content
+        status
+        createdAt
+      }
+      total
+      page
+      pageSize
+    }
+  }
+`;

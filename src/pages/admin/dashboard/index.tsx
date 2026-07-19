@@ -8,59 +8,145 @@ import {
   MessageOutlined,
 } from '@ant-design/icons';
 import { Card, Col, List, Row, Statistic, Table, Tag, Typography } from 'antd';
+import dayjs from 'dayjs';
 
 import {
   ADMIN_DASHBOARD_STATS,
   ADMIN_PENDING_COMMENTS,
   ADMIN_RECENT_ARTICLES,
+  type ArticleItem,
+  type CommentItem,
+  type DashboardStats,
+  type PaginatedResult,
 } from '@/features/admin';
 
 import { executeGraphQL } from '@/shared/graphql/request';
 
 const { Title } = Typography;
 
-interface DashboardStats {
-  articleCount: number;
-  commentCount: number;
-  categoryCount: number;
-  tagCount: number;
-  totalViewCount: number;
-  totalLikeCount: number;
-  pendingCommentCount: number;
-}
+const statsCards = [
+  {
+    title: '文章总数',
+    key: 'articleCount',
+    prefix: <FileTextOutlined />,
+    color: '#1890ff',
+  },
+  {
+    title: '评论总数',
+    key: 'commentCount',
+    prefix: <MessageOutlined />,
+    color: '#52c41a',
+  },
+  {
+    title: '总阅读量',
+    key: 'totalViewCount',
+    prefix: <EyeOutlined />,
+    color: '#722ed1',
+  },
+  {
+    title: '总点赞量',
+    key: 'totalLikeCount',
+    prefix: <HeartOutlined />,
+    color: '#eb2f96',
+  },
+  {
+    title: '分类总数',
+    key: 'categoryCount',
+    prefix: <CalendarOutlined />,
+    color: '#fa8c16',
+  },
+  {
+    title: '标签总数',
+    key: 'tagCount',
+    prefix: <Tag />,
+    color: '#13c2c2',
+  },
+];
 
-interface ArticleItem {
-  id: string;
-  title: string;
-  status: string;
-  viewCount: number;
-  likeCount: number;
-  publishedAt: string;
-  category: {
-    id: string;
-    name: string;
-  } | null;
-}
+const articleColumns = [
+  {
+    title: '标题',
+    dataIndex: 'title',
+    key: 'title',
+    ellipsis: true,
+    width: 250,
+  },
+  {
+    title: '分类',
+    dataIndex: 'category',
+    key: 'category',
+    render: (category: { name: string } | null) =>
+      category ? <Tag color="blue">{category.name}</Tag> : '-',
+    width: 100,
+  },
+  {
+    title: '状态',
+    dataIndex: 'status',
+    key: 'status',
+    render: (status: string) => (
+      <Tag color={status === 'PUBLISHED' ? 'green' : 'orange'}>
+        {status === 'PUBLISHED' ? '已发布' : '草稿'}
+      </Tag>
+    ),
+    width: 80,
+  },
+  {
+    title: '阅读量',
+    dataIndex: 'viewCount',
+    key: 'viewCount',
+    align: 'right' as const,
+    width: 80,
+  },
+  {
+    title: '点赞量',
+    dataIndex: 'likeCount',
+    key: 'likeCount',
+    align: 'right' as const,
+    width: 80,
+  },
+  {
+    title: '发布时间',
+    dataIndex: 'publishedAt',
+    key: 'publishedAt',
+    render: (date: string | null) => (date ? dayjs(date).format('YYYY-MM-DD') : '-'),
+    width: 120,
+  },
+];
 
-interface CommentItem {
-  id: string;
-  articleId: string;
-  authorName: string;
-  authorEmail: string;
-  content: string;
-  status: string;
-  createdAt: string;
-}
+const commentColumns = [
+  {
+    title: '作者',
+    dataIndex: 'authorName',
+    key: 'authorName',
+    width: 100,
+  },
+  {
+    title: '内容',
+    dataIndex: 'content',
+    key: 'content',
+    ellipsis: true,
+  },
+  {
+    title: '时间',
+    dataIndex: 'createdAt',
+    key: 'createdAt',
+    render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm:ss'),
+    width: 170,
+  },
+];
 
-interface PaginatedResult<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
+const defaultStats: DashboardStats = {
+  articleCount: 0,
+  commentCount: 0,
+  categoryCount: 0,
+  tagCount: 0,
+  totalViewCount: 0,
+  totalLikeCount: 0,
+  pendingCommentCount: 0,
+};
 
 export function AdminDashboardPage() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [stats, setStats] = useState<DashboardStats>(defaultStats);
   const [recentArticles, setRecentArticles] = useState<ArticleItem[]>([]);
   const [pendingComments, setPendingComments] = useState<CommentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,131 +173,13 @@ export function AdminDashboardPage() {
       setStats(statsResult.dashboardStats);
       setRecentArticles(articlesResult.articles.items);
       setPendingComments(commentsResult.pendingComments.items);
-    } catch {
-      setStats({
-        articleCount: 0,
-        commentCount: 0,
-        categoryCount: 0,
-        tagCount: 0,
-        totalViewCount: 0,
-        totalLikeCount: 0,
-        pendingCommentCount: 0,
-      });
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+      setStats(defaultStats);
     } finally {
       setLoading(false);
     }
   };
-
-  const statsCards = [
-    {
-      title: '文章总数',
-      value: stats?.articleCount || 0,
-      prefix: <FileTextOutlined />,
-      color: '#1890ff',
-    },
-    {
-      title: '评论总数',
-      value: stats?.commentCount || 0,
-      prefix: <MessageOutlined />,
-      color: '#52c41a',
-    },
-    {
-      title: '总阅读量',
-      value: stats?.totalViewCount || 0,
-      prefix: <EyeOutlined />,
-      color: '#722ed1',
-    },
-    {
-      title: '总点赞量',
-      value: stats?.totalLikeCount || 0,
-      prefix: <HeartOutlined />,
-      color: '#eb2f96',
-    },
-    {
-      title: '分类总数',
-      value: stats?.categoryCount || 0,
-      prefix: <CalendarOutlined />,
-      color: '#fa8c16',
-    },
-    {
-      title: '标签总数',
-      value: stats?.tagCount || 0,
-      prefix: <Tag />,
-      color: '#13c2c2',
-    },
-  ];
-
-  const articleColumns = [
-    {
-      title: '标题',
-      dataIndex: 'title',
-      key: 'title',
-      ellipsis: true,
-      width: 250,
-    },
-    {
-      title: '分类',
-      dataIndex: 'category',
-      key: 'category',
-      render: (category: { name: string } | null) =>
-        category ? <Tag color="blue">{category.name}</Tag> : '-',
-      width: 100,
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => (
-        <Tag color={status === 'PUBLISHED' ? 'green' : 'orange'}>
-          {status === 'PUBLISHED' ? '已发布' : '草稿'}
-        </Tag>
-      ),
-      width: 80,
-    },
-    {
-      title: '阅读量',
-      dataIndex: 'viewCount',
-      key: 'viewCount',
-      align: 'right' as const,
-      width: 80,
-    },
-    {
-      title: '点赞量',
-      dataIndex: 'likeCount',
-      key: 'likeCount',
-      align: 'right' as const,
-      width: 80,
-    },
-    {
-      title: '发布时间',
-      dataIndex: 'publishedAt',
-      key: 'publishedAt',
-      render: (date: string) => (date ? new Date(date).toLocaleDateString('zh-CN') : '-'),
-      width: 120,
-    },
-  ];
-
-  const commentColumns = [
-    {
-      title: '作者',
-      dataIndex: 'authorName',
-      key: 'authorName',
-      width: 100,
-    },
-    {
-      title: '内容',
-      dataIndex: 'content',
-      key: 'content',
-      ellipsis: true,
-    },
-    {
-      title: '时间',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      render: (date: string) => new Date(date).toLocaleString('zh-CN'),
-      width: 150,
-    },
-  ];
 
   return (
     <div>
@@ -219,11 +187,11 @@ export function AdminDashboardPage() {
 
       <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
         {statsCards.map((card) => (
-          <Col span={4} key={card.title}>
+          <Col span={4} key={card.key}>
             <Card>
               <Statistic
                 title={card.title}
-                value={card.value}
+                value={(stats as unknown as Record<string, number>)[card.key]}
                 prefix={card.prefix}
                 valueStyle={{ color: card.color }}
               />
@@ -250,10 +218,7 @@ export function AdminDashboardPage() {
         </Col>
 
         <Col span={12}>
-          <Card
-            title="待审核评论"
-            extra={<Tag color="orange">{stats?.pendingCommentCount || 0} 条</Tag>}
-          >
+          <Card title="待审核评论" extra={<Tag color="orange">{stats.pendingCommentCount} 条</Tag>}>
             {loading ? (
               <List loading />
             ) : pendingComments.length === 0 ? (
@@ -270,51 +235,6 @@ export function AdminDashboardPage() {
                 size="small"
               />
             )}
-          </Card>
-        </Col>
-      </Row>
-
-      <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
-        <Col span={24}>
-          <Card title="数据概览">
-            <div style={{ display: 'flex', justifyContent: 'space-around', padding: '20px 0' }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#1890ff' }}>
-                  {stats?.articleCount || 0}
-                </div>
-                <div style={{ fontSize: '14px', color: '#666', marginTop: '8px' }}>文章数量</div>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#52c41a' }}>
-                  {stats?.commentCount || 0}
-                </div>
-                <div style={{ fontSize: '14px', color: '#666', marginTop: '8px' }}>评论数量</div>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#722ed1' }}>
-                  {stats?.totalViewCount?.toLocaleString() || 0}
-                </div>
-                <div style={{ fontSize: '14px', color: '#666', marginTop: '8px' }}>总阅读量</div>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#eb2f96' }}>
-                  {stats?.totalLikeCount || 0}
-                </div>
-                <div style={{ fontSize: '14px', color: '#666', marginTop: '8px' }}>总点赞量</div>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#fa8c16' }}>
-                  {stats?.categoryCount || 0}
-                </div>
-                <div style={{ fontSize: '14px', color: '#666', marginTop: '8px' }}>分类数量</div>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#13c2c2' }}>
-                  {stats?.tagCount || 0}
-                </div>
-                <div style={{ fontSize: '14px', color: '#666', marginTop: '8px' }}>标签数量</div>
-              </div>
-            </div>
           </Card>
         </Col>
       </Row>

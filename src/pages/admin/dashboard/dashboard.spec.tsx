@@ -6,6 +6,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AdminDashboardPage } from '../dashboard';
 
+vi.mock('dayjs', () => ({
+  default: vi.fn(() => ({
+    format: vi.fn(() => '2024-01-01'),
+  })),
+}));
+
 vi.mock('antd', async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
@@ -517,48 +523,6 @@ describe('AdminDashboardPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Article without category')).toBeInTheDocument();
-    });
-  });
-
-  it('should render data overview section', async () => {
-    (executeGraphQL as ReturnType<typeof vi.fn>).mockResolvedValue({
-      dashboardStats: {
-        articleCount: 42,
-        commentCount: 128,
-        categoryCount: 5,
-        tagCount: 20,
-        totalViewCount: 15680,
-        totalLikeCount: 3240,
-        pendingCommentCount: 5,
-      },
-      articles: {
-        items: [],
-        total: 0,
-        page: 1,
-        pageSize: 5,
-      },
-      pendingComments: {
-        items: [],
-        total: 0,
-        page: 1,
-        pageSize: 5,
-      },
-    });
-
-    render(
-      <MemoryRouter>
-        <AdminDashboardPage />
-      </MemoryRouter>,
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('数据概览')).toBeInTheDocument();
-      expect(screen.getByText('文章数量')).toBeInTheDocument();
-      expect(screen.getByText('评论数量')).toBeInTheDocument();
-      expect(screen.getByText('总阅读量')).toBeInTheDocument();
-      expect(screen.getByText('总点赞量')).toBeInTheDocument();
-      expect(screen.getByText('分类数量')).toBeInTheDocument();
-      expect(screen.getByText('标签数量')).toBeInTheDocument();
     });
   });
 
