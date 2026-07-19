@@ -4,6 +4,7 @@ import { ConfigFactory, ConfigModule, registerAs } from '@nestjs/config';
 import { parseBooleanInput } from '@core/common/normalize/normalize.helper';
 import { IncomingMessage, ServerResponse } from 'http';
 import databaseConfig from './database.config';
+import fileStorageConfig from './file-storage.config';
 
 const isProductionEnv = (): boolean => process.env.NODE_ENV === 'production';
 
@@ -487,6 +488,7 @@ const paginationConfig = () => ({
         emailDeliveryConfig,
         jwtConfig,
         paginationConfig,
+        fileStorageConfig,
       ],
     }),
   ],

@@ -7,7 +7,9 @@ import { CommentRepository } from '@src/modules/blog/repositories/comment.reposi
 import { FileRepository } from '@src/modules/blog/repositories/file.repository';
 import { ArticleQueryService } from '@src/modules/blog/queries/article.query.service';
 import { CommentQueryService } from '@src/modules/blog/queries/comment.query.service';
+import { FileQueryService } from '@src/modules/blog/queries/file.query.service';
 import { TRANSACTION_RUNNER } from '@src/usecases/common/ports/transaction-runner.contract';
+import { FILE_STORAGE_SERVICE } from '@src/usecases/common/ports/file-storage.contract';
 import { CreateArticleUsecase } from './create-article.usecase';
 import { UpdateArticleUsecase } from './update-article.usecase';
 import { DeleteArticleUsecase } from './delete-article.usecase';
@@ -23,6 +25,7 @@ import { DeleteCommentUsecase } from './delete-comment.usecase';
 import { ApproveCommentUsecase } from './approve-comment.usecase';
 import { RejectCommentUsecase } from './reject-comment.usecase';
 import { DeleteFileUsecase } from './delete-file.usecase';
+import { UploadFileUsecase } from './upload-file.usecase';
 import { ArticleStatus, CommentStatus } from '@src/modules/blog/blog.types';
 
 describe('Blog Usecases', () => {
@@ -1798,13 +1801,27 @@ describe('Blog Usecases', () => {
   describe('DeleteFileUsecase', () => {
     let usecase: DeleteFileUsecase;
     let fileRepository: jest.Mocked<FileRepository>;
+    let mockFileStorageService: jest.Mocked<{
+      deleteFile: jest.Mock;
+      storeFile: jest.Mock;
+      getAllowedMimeTypes: jest.Mock;
+      getMaxSizeBytes: jest.Mock;
+    }>;
 
     beforeEach(async () => {
+      mockFileStorageService = {
+        deleteFile: jest.fn(),
+        storeFile: jest.fn(),
+        getAllowedMimeTypes: jest.fn(),
+        getMaxSizeBytes: jest.fn(),
+      };
+
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           DeleteFileUsecase,
           { provide: FileRepository, useValue: { findById: jest.fn(), delete: jest.fn() } },
           { provide: TRANSACTION_RUNNER, useValue: mockTransactionRunner },
+          { provide: FILE_STORAGE_SERVICE, useValue: mockFileStorageService },
         ],
       }).compile();
 
@@ -1829,6 +1846,7 @@ describe('Blog Usecases', () => {
       await usecase.execute({ id: 'file-1', session: adminSession });
 
       expect(fileRepository.delete).toHaveBeenCalledWith('file-1', expect.anything());
+      expect(mockFileStorageService.deleteFile).toHaveBeenCalledWith('1234567890-test-image.jpg');
     });
 
     it('should throw error when file not found', async () => {
@@ -1837,6 +1855,7 @@ describe('Blog Usecases', () => {
       await expect(usecase.execute({ id: 'file-1', session: adminSession })).rejects.toThrow(
         DomainError,
       );
+      expect(mockFileStorageService.deleteFile).not.toHaveBeenCalled();
     });
 
     it('should throw error when non-admin user tries to delete', async () => {
@@ -1844,6 +1863,7 @@ describe('Blog Usecases', () => {
         DomainError,
       );
       expect(fileRepository.findById).not.toHaveBeenCalled();
+      expect(mockFileStorageService.deleteFile).not.toHaveBeenCalled();
     });
 
     it('should throw error when user with empty roles tries to delete', async () => {
@@ -1851,6 +1871,7 @@ describe('Blog Usecases', () => {
         DomainError,
       );
       expect(fileRepository.findById).not.toHaveBeenCalled();
+      expect(mockFileStorageService.deleteFile).not.toHaveBeenCalled();
     });
 
     it('should delete file within existing transaction', async () => {
@@ -1876,6 +1897,211 @@ describe('Blog Usecases', () => {
 
       expect(fileRepository.delete).toHaveBeenCalledWith('file-1', mockTransactionContext);
       expect(mockTransactionRunner.run).not.toHaveBeenCalled();
+      expect(mockFileStorageService.deleteFile).toHaveBeenCalledWith('1234567890-test-image.jpg');
+    });
+  });
+
+  describe('UploadFileUsecase', () => {
+    let usecase: UploadFileUsecase;
+    let fileRepository: jest.Mocked<FileRepository>;
+    let fileQueryService: jest.Mocked<FileQueryService>;
+    let mockFileStorageService: jest.Mocked<{
+      deleteFile: jest.Mock;
+      storeFile: jest.Mock;
+      getAllowedMimeTypes: jest.Mock;
+      getMaxSizeBytes: jest.Mock;
+    }>;
+
+    const mockBase64Image = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD';
+
+    beforeEach(async () => {
+      mockFileStorageService = {
+        deleteFile: jest.fn(),
+        storeFile: jest.fn().mockResolvedValue({
+          storedName: '1234567890-test.jpg',
+          path: './uploads/1234567890-test.jpg',
+          url: '/uploads/1234567890-test.jpg',
+          size: 1024,
+        }),
+        getAllowedMimeTypes: jest.fn(),
+        getMaxSizeBytes: jest.fn(),
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          UploadFileUsecase,
+          { provide: FileRepository, useValue: { save: jest.fn() } },
+          { provide: FileQueryService, useValue: { getFileById: jest.fn() } },
+          { provide: TRANSACTION_RUNNER, useValue: mockTransactionRunner },
+          { provide: FILE_STORAGE_SERVICE, useValue: mockFileStorageService },
+        ],
+      }).compile();
+
+      usecase = module.get<UploadFileUsecase>(UploadFileUsecase);
+      fileRepository = module.get(FileRepository);
+      fileQueryService = module.get(FileQueryService);
+    });
+
+    it('should upload file successfully as admin', async () => {
+      const mockFileEntity = {
+        id: 'file-1',
+        originalName: 'test.jpg',
+        storedName: '1234567890-test.jpg',
+        path: './uploads/1234567890-test.jpg',
+        url: '/uploads/1234567890-test.jpg',
+        mimeType: 'image/jpeg',
+        size: 1024,
+        uploadedBy: '1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const mockFileDTO = {
+        id: 'file-1',
+        originalName: 'test.jpg',
+        storedName: '1234567890-test.jpg',
+        path: './uploads/1234567890-test.jpg',
+        url: '/uploads/1234567890-test.jpg',
+        mimeType: 'image/jpeg',
+        size: 1024,
+        uploadedBy: '1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      fileRepository.save.mockResolvedValue(mockFileEntity);
+      fileQueryService.getFileById.mockResolvedValue(mockFileDTO);
+
+      const result = await usecase.execute({
+        filename: 'test.jpg',
+        content: mockBase64Image,
+        mimeType: 'image/jpeg',
+        session: adminSession,
+      });
+
+      expect(mockFileStorageService.storeFile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          originalName: 'test.jpg',
+          mimeType: 'image/jpeg',
+        }),
+      );
+      expect(fileRepository.save).toHaveBeenCalled();
+      expect(result.id).toBe('file-1');
+    });
+
+    it('should throw error when non-admin user tries to upload', async () => {
+      await expect(
+        usecase.execute({
+          filename: 'test.jpg',
+          content: mockBase64Image,
+          mimeType: 'image/jpeg',
+          session: userSession,
+        }),
+      ).rejects.toThrow(DomainError);
+      expect(mockFileStorageService.storeFile).not.toHaveBeenCalled();
+      expect(fileRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should throw error when user with empty roles tries to upload', async () => {
+      await expect(
+        usecase.execute({
+          filename: 'test.jpg',
+          content: mockBase64Image,
+          mimeType: 'image/jpeg',
+          session: emptySession,
+        }),
+      ).rejects.toThrow(DomainError);
+      expect(mockFileStorageService.storeFile).not.toHaveBeenCalled();
+      expect(fileRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should throw error when file storage fails', async () => {
+      mockFileStorageService.storeFile.mockRejectedValue(
+        new DomainError('STORAGE_ERROR', '存储失败'),
+      );
+
+      await expect(
+        usecase.execute({
+          filename: 'test.jpg',
+          content: mockBase64Image,
+          mimeType: 'image/jpeg',
+          session: adminSession,
+        }),
+      ).rejects.toThrow(DomainError);
+      expect(fileRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should throw error when file not found after save', async () => {
+      const mockFileEntity = {
+        id: 'file-1',
+        originalName: 'test.jpg',
+        storedName: '1234567890-test.jpg',
+        path: './uploads/1234567890-test.jpg',
+        url: '/uploads/1234567890-test.jpg',
+        mimeType: 'image/jpeg',
+        size: 1024,
+        uploadedBy: '1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      fileRepository.save.mockResolvedValue(mockFileEntity);
+      fileQueryService.getFileById.mockResolvedValue(null);
+
+      await expect(
+        usecase.execute({
+          filename: 'test.jpg',
+          content: mockBase64Image,
+          mimeType: 'image/jpeg',
+          session: adminSession,
+        }),
+      ).rejects.toThrow(DomainError);
+    });
+
+    it('should upload file within existing transaction', async () => {
+      const mockTransactionContext = {} as any;
+      const mockFileEntity = {
+        id: 'file-1',
+        originalName: 'test.jpg',
+        storedName: '1234567890-test.jpg',
+        path: './uploads/1234567890-test.jpg',
+        url: '/uploads/1234567890-test.jpg',
+        mimeType: 'image/jpeg',
+        size: 1024,
+        uploadedBy: '1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const mockFileDTO = {
+        id: 'file-1',
+        originalName: 'test.jpg',
+        storedName: '1234567890-test.jpg',
+        path: './uploads/1234567890-test.jpg',
+        url: '/uploads/1234567890-test.jpg',
+        mimeType: 'image/jpeg',
+        size: 1024,
+        uploadedBy: '1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      fileRepository.save.mockResolvedValue(mockFileEntity);
+      fileQueryService.getFileById.mockResolvedValue(mockFileDTO);
+
+      const result = await usecase.execute({
+        filename: 'test.jpg',
+        content: mockBase64Image,
+        mimeType: 'image/jpeg',
+        session: adminSession,
+        transactionContext: mockTransactionContext,
+      });
+
+      expect(fileRepository.save).toHaveBeenCalledWith(expect.any(Object), mockTransactionContext);
+      expect(fileQueryService.getFileById).toHaveBeenCalledWith(
+        expect.any(String),
+        mockTransactionContext,
+      );
+      expect(mockTransactionRunner.run).not.toHaveBeenCalled();
+      expect(result.id).toBe('file-1');
     });
   });
 });

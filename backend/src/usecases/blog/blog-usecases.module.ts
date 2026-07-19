@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { BlogInstallerModule } from '@src/modules/blog/blog-installer.module';
+import { FileStorageModule } from '@src/infrastructure/file-storage/file-storage.module';
 import { CreateArticleUsecase } from './create-article.usecase';
 import { UpdateArticleUsecase } from './update-article.usecase';
 import { DeleteArticleUsecase } from './delete-article.usecase';
@@ -15,9 +16,10 @@ import { DeleteCommentUsecase } from './delete-comment.usecase';
 import { ApproveCommentUsecase } from './approve-comment.usecase';
 import { RejectCommentUsecase } from './reject-comment.usecase';
 import { DeleteFileUsecase } from './delete-file.usecase';
+import { UploadFileUsecase } from './upload-file.usecase';
 
 @Module({
-  imports: [BlogInstallerModule],
+  imports: [BlogInstallerModule, FileStorageModule],
   providers: [
     CreateArticleUsecase,
     UpdateArticleUsecase,
@@ -34,6 +36,7 @@ import { DeleteFileUsecase } from './delete-file.usecase';
     ApproveCommentUsecase,
     RejectCommentUsecase,
     DeleteFileUsecase,
+    UploadFileUsecase,
   ],
   exports: [
     CreateArticleUsecase,
@@ -51,6 +54,7 @@ import { DeleteFileUsecase } from './delete-file.usecase';
     ApproveCommentUsecase,
     RejectCommentUsecase,
     DeleteFileUsecase,
+    UploadFileUsecase,
   ],
 })
 export class BlogUsecasesModule {}

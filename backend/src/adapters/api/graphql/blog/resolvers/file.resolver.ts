@@ -4,15 +4,14 @@ import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { FileDTO } from '../types/file.dto';
 import { FileQueryService } from '@src/modules/blog/queries/file.query.service';
 import { DeleteFileUsecase } from '@usecases/blog/delete-file.usecase';
+import { UploadFileUsecase } from '@usecases/blog/upload-file.usecase';
 import { mapJwtToUsecaseSession } from '@app-types/auth/session.types';
-import { FileRepository } from '@src/modules/blog/repositories/file.repository';
-import { BLOG_ERROR, DomainError } from '@core/common/errors/domain-error';
 
 @Resolver(() => FileDTO)
 export class FileResolver {
   constructor(
     private readonly fileQueryService: FileQueryService,
-    private readonly fileRepository: FileRepository,
+    private readonly uploadFileUsecase: UploadFileUsecase,
     private readonly deleteFileUsecase: DeleteFileUsecase,
   ) {}
 
@@ -43,51 +42,13 @@ export class FileResolver {
       req: { user: { sub: number; accessGroup: string[]; username: string; email: string | null } };
     },
   ): Promise<FileDTO> {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
-    if (!allowedTypes.includes(mimeType)) {
-      throw new DomainError(BLOG_ERROR.VALIDATION_FAILED, '不支持的文件类型');
-    }
-
-    const base64Data = content.split(',')[1] || content;
-    const buffer = Buffer.from(base64Data, 'base64');
-    const size = buffer.length;
-
-    if (size > 10 * 1024 * 1024) {
-      throw new DomainError(BLOG_ERROR.VALIDATION_FAILED, '文件大小不能超过 10MB');
-    }
-
-    const storedName = `${Date.now()}-${filename}`;
-    const uploadDir = process.env.FILE_UPLOAD_DIR || './uploads';
-    const path = `${uploadDir}/${storedName}`;
-
-    const fs = await import('fs');
-    const pathModule = await import('path');
-
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    fs.writeFileSync(pathModule.join(process.cwd(), path), buffer);
-
-    const appHost = process.env.APP_HOST || 'localhost';
-    const appPort = process.env.APP_PORT || '3000';
-    const url = `http://${appHost}:${appPort}/uploads/${storedName}`;
-
-    const file = await this.fileRepository.save({
-      originalName: filename,
-      storedName,
-      path,
-      url,
+    const session = mapJwtToUsecaseSession(context.req.user);
+    return this.uploadFileUsecase.execute({
+      filename,
+      content,
       mimeType,
-      size,
-      uploadedBy: String(context.req.user.sub),
+      session,
     });
-
-    const result = await this.fileQueryService.getFileById(file.id);
-    if (!result) {
-      throw new DomainError(BLOG_ERROR.FILE_NOT_FOUND, '文件保存后查询失败');
-    }
-    return result;
   }
 
   @Mutation(() => Boolean)

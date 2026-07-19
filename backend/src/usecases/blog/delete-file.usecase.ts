@@ -6,6 +6,10 @@ import {
   TRANSACTION_RUNNER,
   type TransactionRunner,
 } from '@src/usecases/common/ports/transaction-runner.contract';
+import {
+  FILE_STORAGE_SERVICE,
+  type FileStorageService,
+} from '@src/usecases/common/ports/file-storage.contract';
 import { BLOG_ERROR, DomainError, PERMISSION_ERROR } from '@core/common/errors/domain-error';
 import { isAdmin } from '@core/blog/policy/blog-authorization.policy';
 
@@ -15,6 +19,8 @@ export class DeleteFileUsecase {
     private readonly fileRepository: FileRepository,
     @Inject(TRANSACTION_RUNNER)
     private readonly transactionRunner: TransactionRunner,
+    @Inject(FILE_STORAGE_SERVICE)
+    private readonly fileStorageService: FileStorageService,
   ) {}
 
   async execute({
@@ -37,6 +43,7 @@ export class DeleteFileUsecase {
       }
 
       await this.fileRepository.delete(id, activeTransactionContext);
+      await this.fileStorageService.deleteFile(file.storedName);
     };
 
     return transactionContext
