@@ -55,7 +55,7 @@ describe('CommentQueryService', () => {
   });
 
   describe('getCommentsByArticle', () => {
-    const pagination: PaginationInput = { page: 1, limit: 10 };
+    const pagination: PaginationInput = { page: 1, pageSize: 10 };
 
     it('should return flat comments when no nesting', async () => {
       commentRepository.findApprovedByArticle.mockResolvedValue({
@@ -220,7 +220,7 @@ describe('CommentQueryService', () => {
   });
 
   describe('getPendingComments', () => {
-    const pagination: PaginationInput = { page: 1, limit: 10 };
+    const pagination: PaginationInput = { page: 1, pageSize: 10 };
 
     it('should return pending comments', async () => {
       const pendingComment = { ...mockCommentEntity, status: CommentStatus.PENDING };

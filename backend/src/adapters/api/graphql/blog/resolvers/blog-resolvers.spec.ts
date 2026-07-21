@@ -24,6 +24,7 @@ import { DeleteCategoryUsecase } from '@usecases/blog/delete-category.usecase';
 import { CreateTagUsecase } from '@usecases/blog/create-tag.usecase';
 import { UpdateTagUsecase } from '@usecases/blog/update-tag.usecase';
 import { DeleteTagUsecase } from '@usecases/blog/delete-tag.usecase';
+import { IncrementArticleCounterUsecase } from '@usecases/blog/increment-article-counter.usecase';
 import { ArticleStatus, CommentStatus } from '@src/modules/blog/blog.types';
 
 describe('Blog Resolvers', () => {
@@ -39,15 +40,18 @@ describe('Blog Resolvers', () => {
   let tagQueryService: jest.Mocked<TagQueryService>;
   let categoryRepository: jest.Mocked<CategoryRepository>;
   let tagRepository: jest.Mocked<TagRepository>;
+  let incrementArticleCounterUsecase: {
+    incrementViewCount: jest.Mock;
+    incrementLikeCount: jest.Mock;
+  };
 
   beforeAll(async () => {
     articleQueryService = {
       getArticles: jest.fn(),
       getArticleById: jest.fn(),
+      getAdjacentArticles: jest.fn(),
       getArchives: jest.fn(),
       getArticleStats: jest.fn(),
-      incrementViewCount: jest.fn(),
-      incrementLikeCount: jest.fn(),
     } as any;
 
     commentQueryService = {
@@ -59,11 +63,13 @@ describe('Blog Resolvers', () => {
     categoryQueryService = {
       getAllCategories: jest.fn(),
       getCategoryCount: jest.fn(),
+      getCategoryById: jest.fn(),
     } as any;
 
     tagQueryService = {
       getAllTags: jest.fn(),
       getTagCount: jest.fn(),
+      getTagsByArticle: jest.fn(),
     } as any;
 
     categoryRepository = {
@@ -73,6 +79,11 @@ describe('Blog Resolvers', () => {
     tagRepository = {
       findAll: jest.fn(),
     } as any;
+
+    incrementArticleCounterUsecase = {
+      incrementViewCount: jest.fn(),
+      incrementLikeCount: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -101,6 +112,7 @@ describe('Blog Resolvers', () => {
         { provide: CreateTagUsecase, useValue: { execute: jest.fn() } },
         { provide: UpdateTagUsecase, useValue: { execute: jest.fn() } },
         { provide: DeleteTagUsecase, useValue: { execute: jest.fn() } },
+        { provide: IncrementArticleCounterUsecase, useValue: incrementArticleCounterUsecase },
       ],
     }).compile();
 
@@ -139,7 +151,7 @@ describe('Blog Resolvers', () => {
       };
       articleQueryService.getArticles.mockResolvedValue(mockResult);
 
-      const result = await articleResolver.articles({ page: 1, limit: 10 }, {});
+      const result = await articleResolver.articles({ page: 1, pageSize: 10 }, {});
 
       expect(articleQueryService.getArticles).toHaveBeenCalled();
       expect(result.total).toBe(1);
@@ -195,12 +207,12 @@ describe('Blog Resolvers', () => {
         updatedAt: new Date(),
         publishedAt: new Date(),
       };
-      articleQueryService.incrementViewCount.mockResolvedValue();
+      incrementArticleCounterUsecase.incrementViewCount.mockResolvedValue(undefined);
       articleQueryService.getArticleById.mockResolvedValue({ ...mockArticle, viewCount: 1 });
 
       const result = await articleResolver.incrementViewCount('1');
 
-      expect(articleQueryService.incrementViewCount).toHaveBeenCalledWith('1');
+      expect(incrementArticleCounterUsecase.incrementViewCount).toHaveBeenCalledWith('1');
       expect(result?.viewCount).toBe(1);
     });
 
@@ -221,12 +233,12 @@ describe('Blog Resolvers', () => {
         updatedAt: new Date(),
         publishedAt: new Date(),
       };
-      articleQueryService.incrementLikeCount.mockResolvedValue();
+      incrementArticleCounterUsecase.incrementLikeCount.mockResolvedValue(undefined);
       articleQueryService.getArticleById.mockResolvedValue({ ...mockArticle, likeCount: 1 });
 
       const result = await articleResolver.incrementLikeCount('1');
 
-      expect(articleQueryService.incrementLikeCount).toHaveBeenCalledWith('1');
+      expect(incrementArticleCounterUsecase.incrementLikeCount).toHaveBeenCalledWith('1');
       expect(result?.likeCount).toBe(1);
     });
   });
@@ -285,7 +297,7 @@ describe('Blog Resolvers', () => {
       };
       commentQueryService.getPendingComments.mockResolvedValue(mockResult);
 
-      const result = await commentResolver.pendingComments({ page: 1, limit: 20 });
+      const result = await commentResolver.pendingComments({ page: 1, pageSize: 20 });
 
       expect(commentQueryService.getPendingComments).toHaveBeenCalled();
       expect(result.total).toBe(1);

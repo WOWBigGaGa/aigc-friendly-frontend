@@ -171,7 +171,7 @@ export interface UpdateTagInput {
 // 分页参数
 export interface PaginationInput {
   page: number;
-  limit: number;
+  pageSize: number;
 }
 
 // 分页结果

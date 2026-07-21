@@ -4,16 +4,6 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/features/blog', () => ({
-  GET_ADJACENT_ARTICLES: { loc: { source: { body: 'mock adjacent query' } } },
-  GET_ARTICLE_BY_ID: { loc: { source: { body: 'mock article query' } } },
-  INCREMENT_VIEW_COUNT: { loc: { source: { body: 'mock increment view count mutation' } } },
-}));
-
-import { executeGraphQL } from '@/shared/graphql';
-
-import { ArticleDetail } from './article-detail';
-
 vi.mock('antd', async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
@@ -143,13 +133,6 @@ vi.mock('@/features/blog', () => ({
       },
     },
   },
-  GET_ADJACENT_ARTICLES: {
-    loc: {
-      source: {
-        body: 'mock adjacent query',
-      },
-    },
-  },
   GET_COMMENTS: {
     loc: {
       source: {
@@ -173,11 +156,14 @@ vi.mock('@/features/blog', () => ({
   },
 }));
 
-const createArticle = (options: { content?: string; category?: boolean } = {}) => ({
+import { executeGraphQL } from '@/shared/graphql';
+
+import { ArticleDetail } from './article-detail';
+
+const createArticle = (options: { content?: string } = {}) => ({
   id: 'article-1',
   title: 'Test Article',
-  slug: 'test-article',
-  excerpt: 'This is a test article excerpt.',
+  summary: 'This is a test article summary.',
   content:
     options.content ??
     `## Section 1
@@ -194,25 +180,6 @@ This is the second section.`,
   viewCount: 100,
   likeCount: 20,
   publishedAt: '2024-01-15T10:30:00Z',
-  category:
-    options.category !== false
-      ? { id: 'cat-1', name: 'Technology', slug: 'technology' }
-      : undefined,
-  tags: [
-    { id: 'tag-1', name: 'React', slug: 'react' },
-    { id: 'tag-2', name: 'TypeScript', slug: 'typescript' },
-  ],
-});
-
-const createAdjacentArticles = (options: { prev?: boolean; next?: boolean } = {}) => ({
-  prev:
-    options.prev !== false
-      ? { id: 'article-0', title: 'Previous Article', slug: 'previous-article' }
-      : undefined,
-  next:
-    options.next !== false
-      ? { id: 'article-2', title: 'Next Article', slug: 'next-article' }
-      : undefined,
 });
 
 const createComments = () => ({
@@ -236,13 +203,9 @@ const createComments = () => ({
   pageInfo: { hasNext: false },
 });
 
-const setupMock = (
-  articleOptions: { content?: string; category?: boolean } = {},
-  adjacentOptions: { prev?: boolean; next?: boolean } = {},
-) => {
+const setupMock = (articleOptions: { content?: string } = {}) => {
   vi.mocked(executeGraphQL)
     .mockResolvedValueOnce({ article: createArticle(articleOptions) })
-    .mockResolvedValueOnce({ adjacentArticles: createAdjacentArticles(adjacentOptions) })
     .mockResolvedValueOnce({ incrementViewCount: createArticle(articleOptions) })
     .mockResolvedValueOnce({ comments: createComments() });
 };
@@ -305,37 +268,6 @@ describe('ArticleDetail', () => {
     expect(titleElements[0]).toHaveTextContent('Test Article');
   });
 
-  it('renders category and tags', async () => {
-    setupMock();
-
-    render(
-      <MemoryRouter>
-        <ArticleDetail articleId="article-1" />
-      </MemoryRouter>,
-    );
-
-    await screen.findAllByTestId('title');
-
-    const tags = screen.getAllByTestId('tag');
-    expect(tags.length).toBe(3);
-    expect(tags[0]).toHaveAttribute('data-color', 'blue');
-  });
-
-  it('does not render category tag when category is undefined', async () => {
-    setupMock({ category: false });
-
-    render(
-      <MemoryRouter>
-        <ArticleDetail articleId="article-1" />
-      </MemoryRouter>,
-    );
-
-    await screen.findAllByTestId('title');
-
-    const tags = screen.getAllByTestId('tag');
-    expect(tags.length).toBe(2);
-  });
-
   it('renders TOC when article has headings', async () => {
     setupMock();
 
@@ -365,64 +297,6 @@ describe('ArticleDetail', () => {
     expect(screen.queryByTestId('anchor')).not.toBeInTheDocument();
   });
 
-  it('renders adjacent article navigation links', async () => {
-    setupMock();
-
-    render(
-      <MemoryRouter>
-        <ArticleDetail articleId="article-1" />
-      </MemoryRouter>,
-    );
-
-    await screen.findAllByTestId('title');
-
-    const links = screen.getAllByRole('link');
-    const navLinks = links.filter((link) =>
-      link.getAttribute('href')?.startsWith('/blog/article/'),
-    );
-    expect(navLinks.length).toBe(2);
-    expect(navLinks[0]).toHaveAttribute('href', '/blog/article/article-0');
-    expect(navLinks[1]).toHaveAttribute('href', '/blog/article/article-2');
-  });
-
-  it('renders only previous article when next article is undefined', async () => {
-    setupMock({}, { next: false });
-
-    render(
-      <MemoryRouter>
-        <ArticleDetail articleId="article-1" />
-      </MemoryRouter>,
-    );
-
-    await screen.findAllByTestId('title');
-
-    const links = screen.getAllByRole('link');
-    const navLinks = links.filter((link) =>
-      link.getAttribute('href')?.startsWith('/blog/article/'),
-    );
-    expect(navLinks.length).toBe(1);
-    expect(navLinks[0]).toHaveAttribute('href', '/blog/article/article-0');
-  });
-
-  it('renders only next article when previous article is undefined', async () => {
-    setupMock({}, { prev: false });
-
-    render(
-      <MemoryRouter>
-        <ArticleDetail articleId="article-1" />
-      </MemoryRouter>,
-    );
-
-    await screen.findAllByTestId('title');
-
-    const links = screen.getAllByRole('link');
-    const navLinks = links.filter((link) =>
-      link.getAttribute('href')?.startsWith('/blog/article/'),
-    );
-    expect(navLinks.length).toBe(1);
-    expect(navLinks[0]).toHaveAttribute('href', '/blog/article/article-2');
-  });
-
   it('calls incrementViewCount mutation when article is loaded', async () => {
     setupMock();
 
@@ -433,13 +307,12 @@ describe('ArticleDetail', () => {
     );
 
     await waitFor(() => {
-      expect(executeGraphQL).toHaveBeenCalledTimes(4);
+      expect(executeGraphQL).toHaveBeenCalledTimes(3);
     });
 
     expect(executeGraphQL).toHaveBeenLastCalledWith('mock comments query', {
       articleId: 'article-1',
-      page: 1,
-      pageSize: 10,
+      pagination: { page: 1, pageSize: 10 },
     });
   });
 
@@ -457,7 +330,9 @@ describe('ArticleDetail', () => {
     });
 
     expect(executeGraphQL).toHaveBeenCalledWith('mock article query', { id: 'article-1' });
-    expect(executeGraphQL).toHaveBeenCalledWith('mock adjacent query', { id: 'article-1' });
+    expect(executeGraphQL).toHaveBeenCalledWith('mock increment view count mutation', {
+      id: 'article-1',
+    });
   });
 
   it('renders Markdown content', async () => {
@@ -506,29 +381,11 @@ describe('ArticleDetail', () => {
     expect(screen.getByText('文章不存在或加载出错，请稍后重试。')).toBeInTheDocument();
   });
 
-  it('renders error state when adjacent articles API fails', async () => {
-    vi.mocked(executeGraphQL)
-      .mockResolvedValueOnce({ article: createArticle() })
-      .mockRejectedValueOnce(new Error('Network error'));
-
-    render(
-      <MemoryRouter>
-        <ArticleDetail articleId="article-1" />
-      </MemoryRouter>,
-    );
-
-    await waitFor(() => {
-      expect(screen.queryByTestId('article-error')).toBeInTheDocument();
-    });
-
-    expect(screen.getByText('文章加载失败')).toBeInTheDocument();
-  });
-
   it('does not render error state when increment view count fails', async () => {
     vi.mocked(executeGraphQL)
       .mockResolvedValueOnce({ article: createArticle() })
-      .mockResolvedValueOnce({ adjacentArticles: createAdjacentArticles() })
-      .mockRejectedValueOnce(new Error('Mutation error'));
+      .mockRejectedValueOnce(new Error('Mutation error'))
+      .mockResolvedValueOnce({ comments: createComments() });
 
     render(
       <MemoryRouter>
@@ -580,20 +437,6 @@ describe('ArticleDetail', () => {
     expect(screen.getByText('2024年1月15日')).toBeInTheDocument();
   });
 
-  it('renders "没有更多文章" when no adjacent articles', async () => {
-    setupMock({}, { prev: false, next: false });
-
-    render(
-      <MemoryRouter>
-        <ArticleDetail articleId="article-1" />
-      </MemoryRouter>,
-    );
-
-    await screen.findAllByTestId('title');
-
-    expect(screen.getByText('没有更多文章')).toBeInTheDocument();
-  });
-
   it('scrolls to heading when TOC link is clicked', async () => {
     setupMock();
     const scrollIntoViewMock = vi.fn();
@@ -622,7 +465,6 @@ describe('ArticleDetail', () => {
   it('calls incrementViewCount even when article fetch fails', async () => {
     vi.mocked(executeGraphQL)
       .mockRejectedValueOnce(new Error('Network error'))
-      .mockRejectedValueOnce(new Error('Network error'))
       .mockResolvedValueOnce({ incrementViewCount: createArticle() })
       .mockResolvedValueOnce({ comments: createComments() });
 
@@ -636,7 +478,7 @@ describe('ArticleDetail', () => {
       expect(screen.queryByTestId('article-error')).toBeInTheDocument();
     });
 
-    expect(executeGraphQL).toHaveBeenCalledTimes(4);
+    expect(executeGraphQL).toHaveBeenCalledTimes(3);
     expect(executeGraphQL).toHaveBeenCalledWith('mock increment view count mutation', {
       id: 'article-1',
     });
@@ -666,7 +508,6 @@ describe('ArticleDetail', () => {
   it('updates like count after successful like', async () => {
     vi.mocked(executeGraphQL)
       .mockResolvedValueOnce({ article: createArticle() })
-      .mockResolvedValueOnce({ adjacentArticles: createAdjacentArticles() })
       .mockResolvedValueOnce({ incrementViewCount: createArticle() })
       .mockResolvedValueOnce({ comments: createComments() })
       .mockResolvedValueOnce({ incrementLikeCount: { ...createArticle(), likeCount: 21 } });
@@ -692,7 +533,6 @@ describe('ArticleDetail', () => {
   it('does not crash when like mutation fails', async () => {
     vi.mocked(executeGraphQL)
       .mockResolvedValueOnce({ article: createArticle() })
-      .mockResolvedValueOnce({ adjacentArticles: createAdjacentArticles() })
       .mockResolvedValueOnce({ incrementViewCount: createArticle() })
       .mockResolvedValueOnce({ comments: createComments() })
       .mockRejectedValueOnce(new Error('Mutation error'));
@@ -723,8 +563,7 @@ describe('ArticleDetail', () => {
     await waitFor(() => {
       expect(executeGraphQL).toHaveBeenCalledWith('mock comments query', {
         articleId: 'article-1',
-        page: 1,
-        pageSize: 10,
+        pagination: { page: 1, pageSize: 10 },
       });
     });
   });
@@ -747,7 +586,6 @@ describe('ArticleDetail', () => {
   it('shows comments loading state', async () => {
     vi.mocked(executeGraphQL)
       .mockResolvedValueOnce({ article: createArticle() })
-      .mockResolvedValueOnce({ adjacentArticles: createAdjacentArticles() })
       .mockResolvedValueOnce({ incrementViewCount: createArticle() })
       .mockImplementationOnce(() => new Promise(() => {}));
 
@@ -765,7 +603,6 @@ describe('ArticleDetail', () => {
   it('shows comments error state when fetch fails', async () => {
     vi.mocked(executeGraphQL)
       .mockResolvedValueOnce({ article: createArticle() })
-      .mockResolvedValueOnce({ adjacentArticles: createAdjacentArticles() })
       .mockResolvedValueOnce({ incrementViewCount: createArticle() })
       .mockRejectedValueOnce(new Error('Network error'));
 

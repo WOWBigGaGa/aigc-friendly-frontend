@@ -14,18 +14,20 @@ interface ArticleListProps {
 }
 
 interface ArticlesQueryVariables {
-  page?: number;
-  pageSize?: number;
+  pagination: {
+    page: number;
+    pageSize: number;
+  };
 }
 
 interface ArticlesQueryResult {
   articles: {
-    data: Article[];
-    pagination: {
-      page: number;
-      pageSize: number;
-      total: number;
-      totalPages: number;
+    items: Article[];
+    total: number;
+    page: number;
+    pageSize: number;
+    pageInfo: {
+      hasNext: boolean;
     };
   };
 }
@@ -45,8 +47,10 @@ export function ArticleList({ page = 1, pageSize = 10, onPageChange }: ArticleLi
         const result = await executeGraphQL<ArticlesQueryResult, ArticlesQueryVariables>(
           queryBody,
           {
-            page,
-            pageSize,
+            pagination: {
+              page,
+              pageSize,
+            },
           },
         );
         setData(result);
@@ -70,15 +74,18 @@ export function ArticleList({ page = 1, pageSize = 10, onPageChange }: ArticleLi
 
   if (error) {
     return (
-      <Alert message="加载失败" description="文章列表加载失败，请稍后重试" type="error" showIcon />
+      <Alert title="加载失败" description="文章列表加载失败，请稍后重试" type="error" showIcon />
     );
   }
 
-  const articles = data?.articles?.data || [];
-  const pagination = data?.articles?.pagination;
+  const articles = data?.articles?.items || [];
+  const pageInfo = data?.articles?.pageInfo;
+  const total = data?.articles?.total ?? 0;
+  const currentPage = data?.articles?.page ?? page;
+  const currentPageSize = data?.articles?.pageSize ?? pageSize;
 
   if (articles.length === 0) {
-    return <Alert message="暂无文章" description="还没有发布任何文章" type="info" showIcon />;
+    return <Alert title="暂无文章" description="还没有发布任何文章" type="info" showIcon />;
   }
 
   const pinnedArticles = articles.filter((article: Article) => article.isPinned);
@@ -127,12 +134,12 @@ export function ArticleList({ page = 1, pageSize = 10, onPageChange }: ArticleLi
         />
       </div>
 
-      {pagination && pagination.totalPages > 1 && (
+      {pageInfo && pageInfo.hasNext && (
         <div style={{ textAlign: 'center', marginTop: '32px' }}>
           <Pagination
-            current={pagination.page}
-            pageSize={pagination.pageSize}
-            total={pagination.total}
+            current={currentPage}
+            pageSize={currentPageSize}
+            total={total}
             onChange={handlePageChange}
             showSizeChanger={false}
             showTotal={(total) => `共 ${total} 篇文章`}

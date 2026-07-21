@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { ClockCircleOutlined, EyeOutlined, HeartOutlined } from '@ant-design/icons';
-import { Button, Divider, message, Spin, Tag, Typography } from 'antd';
+import { Button, Divider, message, Spin, Typography } from 'antd';
 import ReactMarkdown from 'react-markdown';
 
 import {
-  GET_ADJACENT_ARTICLES,
   GET_ARTICLE_BY_ID,
   GET_COMMENTS,
   INCREMENT_LIKE_COUNT,
@@ -19,40 +18,14 @@ import { CommentList } from './comment-list';
 
 const { Title, Paragraph } = Typography;
 
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-}
-
-interface Tag {
-  id: string;
-  name: string;
-  slug: string;
-}
-
 interface Article {
   id: string;
   title: string;
-  slug: string;
-  excerpt: string;
+  summary: string;
   content: string;
   viewCount: number;
   likeCount: number;
   publishedAt: string;
-  category?: Category;
-  tags: Tag[];
-}
-
-interface AdjacentArticle {
-  id: string;
-  title: string;
-  slug: string;
-}
-
-interface AdjacentArticles {
-  prev?: AdjacentArticle;
-  next?: AdjacentArticle;
 }
 
 interface Heading {
@@ -83,7 +56,6 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [article, setArticle] = useState<Article | null>(null);
-  const [adjacentArticles, setAdjacentArticles] = useState<AdjacentArticles | null>(null);
   const [headings, setHeadings] = useState<Heading[]>([]);
   const [activeHeading, setActiveHeading] = useState<string>('');
   const [comments, setComments] = useState<Comment[]>([]);
@@ -120,17 +92,12 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
       setError(null);
       try {
         const queryBody = GET_ARTICLE_BY_ID.loc?.source?.body ?? '';
-        const adjacentBody = GET_ADJACENT_ARTICLES.loc?.source?.body ?? '';
-
-        const [articleResult, adjacentResult] = await Promise.all([
-          executeGraphQL<{ article: Article }, { id: string }>(queryBody, { id: articleId }),
-          executeGraphQL<{ adjacentArticles: AdjacentArticles }, { id: string }>(adjacentBody, {
-            id: articleId,
-          }),
-        ]);
+        const articleResult = await executeGraphQL<{ article: Article }, { id: string }>(
+          queryBody,
+          { id: articleId },
+        );
 
         setArticle(articleResult.article);
-        setAdjacentArticles(adjacentResult.adjacentArticles);
         extractHeadings(articleResult.article.content);
       } catch (err) {
         setError(err as Error);
@@ -165,8 +132,8 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
       const queryBody = GET_COMMENTS.loc?.source?.body ?? '';
       const result = await executeGraphQL<
         { comments: { items: Comment[]; total: number; pageInfo: { hasNext: boolean } } },
-        { articleId: string; page: number; pageSize: number }
-      >(queryBody, { articleId, page, pageSize: 10 });
+        { articleId: string; pagination: { page: number; pageSize: number } }
+      >(queryBody, { articleId, pagination: { page, pageSize: 10 } });
 
       if (append) {
         setComments((prev) => [...prev, ...result.comments.items]);
@@ -312,16 +279,6 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
               flexWrap: 'wrap',
             }}
           >
-            {article.category && (
-              <Tag color="blue" key={article.category.id}>
-                {article.category.name}
-              </Tag>
-            )}
-
-            {article.tags.map((tag) => (
-              <Tag key={tag.id}>{tag.name}</Tag>
-            ))}
-
             <span
               style={{
                 display: 'flex',
@@ -574,84 +531,6 @@ export function ArticleDetail({ articleId }: { articleId: string }) {
             </ReactMarkdown>
           </main>
         </div>
-
-        <Divider />
-
-        <nav
-          className="article-navigation"
-          style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}
-        >
-          {adjacentArticles?.prev && (
-            <a
-              href={`/blog/article/${adjacentArticles.prev.id}`}
-              style={{
-                flex: 1,
-                padding: '12px 16px',
-                background: 'var(--ant-color-bg-hover)',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                color: 'var(--ant-color-text-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              <span style={{ fontSize: '12px', color: 'var(--ant-color-text-secondary)' }}>
-                上一篇
-              </span>
-              <span
-                style={{
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {adjacentArticles.prev.title}
-              </span>
-            </a>
-          )}
-
-          {adjacentArticles?.next && (
-            <a
-              href={`/blog/article/${adjacentArticles.next.id}`}
-              style={{
-                flex: 1,
-                padding: '12px 16px',
-                background: 'var(--ant-color-bg-hover)',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                color: 'var(--ant-color-text-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                justifyContent: 'flex-end',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {adjacentArticles.next.title}
-              </span>
-              <span style={{ fontSize: '12px', color: 'var(--ant-color-text-secondary)' }}>
-                下一篇
-              </span>
-            </a>
-          )}
-
-          {!adjacentArticles?.prev && !adjacentArticles?.next && (
-            <div style={{ flex: 1, textAlign: 'center', color: 'var(--ant-color-text-secondary)' }}>
-              没有更多文章
-            </div>
-          )}
-        </nav>
 
         <Divider />
 

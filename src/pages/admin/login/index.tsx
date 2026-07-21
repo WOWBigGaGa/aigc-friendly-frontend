@@ -9,20 +9,26 @@ import { ADMIN_LOGIN } from '@/features/admin';
 import { executeGraphQL } from '@/shared/graphql/request';
 
 type AdminLoginMutationResponse = {
-  adminLogin: {
-    token: string;
-    user: {
-      id: string;
-      username: string;
+  login: {
+    accessToken: string;
+    refreshToken: string;
+    accountId: number;
+    role: string;
+    userInfo: {
+      id: number;
+      accountId: number;
+      nickname: string;
       email: string;
-      roles: string[];
+      avatarUrl: string;
     };
   };
 };
 
 type AdminLoginMutationVariables = {
-  username: string;
-  password: string;
+  loginName: string;
+  loginPassword: string;
+  type: string;
+  audience: string;
 };
 
 export function AdminLoginPage() {
@@ -37,12 +43,19 @@ export function AdminLoginPage() {
       const data = await executeGraphQL<AdminLoginMutationResponse, AdminLoginMutationVariables>(
         ADMIN_LOGIN,
         {
-          username: values.username,
-          password: values.password,
+          loginName: values.username,
+          loginPassword: values.password,
+          type: 'PASSWORD',
+          audience: 'DESKTOP',
         },
       );
-      const { token, user } = data.adminLogin;
-      login(token, user);
+      const { accessToken, userInfo } = data.login;
+      login(accessToken, {
+        id: String(userInfo.id),
+        username: userInfo.nickname,
+        email: userInfo.email,
+        roles: [data.login.role],
+      });
       message.success('登录成功');
       navigate('/admin/dashboard');
     } catch {

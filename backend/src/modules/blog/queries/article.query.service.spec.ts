@@ -67,7 +67,7 @@ describe('ArticleQueryService', () => {
   });
 
   describe('getArticles', () => {
-    const pagination: PaginationInput = { page: 1, limit: 10 };
+    const pagination: PaginationInput = { page: 1, pageSize: 10 };
 
     it('should return published articles without filter', async () => {
       articleRepository.findPublishedWithPagination.mockResolvedValue({
@@ -186,7 +186,7 @@ describe('ArticleQueryService', () => {
     });
 
     it('should handle pagination boundary (page 0)', async () => {
-      const paginationZero: PaginationInput = { page: 0, limit: 10 };
+      const paginationZero: PaginationInput = { page: 0, pageSize: 10 };
       articleRepository.findPublishedWithPagination.mockResolvedValue({
         items: [],
         total: 0,
@@ -198,8 +198,8 @@ describe('ArticleQueryService', () => {
       expect(result.items).toHaveLength(0);
     });
 
-    it('should handle pagination boundary (page 1 with limit 0)', async () => {
-      const paginationZeroLimit: PaginationInput = { page: 1, limit: 0 };
+    it('should handle pagination boundary (page 1 with pageSize 0)', async () => {
+      const paginationZeroLimit: PaginationInput = { page: 1, pageSize: 0 };
       articleRepository.findPublishedWithPagination.mockResolvedValue({
         items: [],
         total: 0,

@@ -63,10 +63,10 @@ export function AdminCommentsPage() {
     try {
       const result = await executeGraphQL<
         { allComments: PaginatedResult<CommentItem> },
-        { page: number; limit: number; status?: string }
+        { page: number; pageSize: number; status?: string }
       >(ADMIN_ALL_COMMENTS, {
         page: currentPage,
-        limit: 10,
+        pageSize: 10,
         ...(statusFilter && { status: statusFilter }),
       });
 

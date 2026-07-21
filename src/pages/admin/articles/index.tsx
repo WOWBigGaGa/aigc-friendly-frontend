@@ -37,8 +37,8 @@ export function AdminArticlesPage() {
     try {
       const result = await executeGraphQL<
         { articles: PaginatedResult<ArticleItem> },
-        { page: number; limit: number }
-      >(ADMIN_RECENT_ARTICLES, { page: currentPage, limit: 10 });
+        { page: number; pageSize: number }
+      >(ADMIN_RECENT_ARTICLES, { page: currentPage, pageSize: 10 });
 
       setArticles(result.articles.items);
       setTotal(result.articles.total);
@@ -91,14 +91,6 @@ export function AdminArticlesPage() {
       key: 'title',
       ellipsis: true,
       width: 250,
-    },
-    {
-      title: '分类',
-      dataIndex: 'category',
-      key: 'category',
-      render: (category: { name: string } | null) =>
-        category ? <Tag color="blue">{category.name}</Tag> : '-',
-      width: 100,
     },
     {
       title: '状态',

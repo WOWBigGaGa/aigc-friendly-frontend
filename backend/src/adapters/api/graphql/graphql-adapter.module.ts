@@ -25,6 +25,7 @@ import { RegistrationResolver } from './registration/registration.resolver';
 import { ThirdPartyAuthResolver } from './third-party-auth/third-party-auth.resolver';
 import { VerificationRecordResolver } from './verification-record/verification-record.resolver';
 import { MagicWorkshopResolver } from './magic-workshop/magic-workshop.resolver';
+import { BlogGraphQLModule } from './blog/blog.graphql.module';
 
 // Guards
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -54,6 +55,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     ThirdPartyAccountsUsecasesModule,
     VerificationRecordUsecasesModule,
     VerificationUsecasesModule,
+    BlogGraphQLModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
   ],
   providers: [

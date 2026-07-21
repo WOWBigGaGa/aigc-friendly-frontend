@@ -17,16 +17,16 @@ vi.mock('antd', async (importOriginal) => {
   return {
     ...actual,
     Alert: ({
-      message,
+      title,
       description,
       type,
     }: {
-      message?: string;
+      title?: string;
       description?: string;
       type?: 'error' | 'info';
     }) => (
       <div data-testid="alert" data-type={type}>
-        <span data-testid="alert-message">{message}</span>
+        <span data-testid="alert-message">{title}</span>
         {description && <span data-testid="alert-description">{description}</span>}
       </div>
     ),
@@ -107,31 +107,28 @@ const createArticles = (count: number, options: { pinned?: boolean } = {}): Arti
   return Array.from({ length: count }, (_, i) => ({
     id: `article-${i + 1}`,
     title: `Article ${i + 1}`,
-    slug: `article-${i + 1}`,
-    excerpt: `Excerpt for article ${i + 1}`,
+    summary: `Summary for article ${i + 1}`,
     content: `Content for article ${i + 1}`,
     viewCount: 100 + i,
     likeCount: 10 + i,
     publishedAt: `2024-01-${15 + i}T10:30:00Z`,
-    category: {
-      id: `category-${i + 1}`,
-      name: `Category ${i + 1}`,
-      slug: `category-${i + 1}`,
-    },
-    tags: [{ id: `tag-${i + 1}`, name: `Tag ${i + 1}`, slug: `tag-${i + 1}` }],
     isPinned: options.pinned ?? false,
   }));
 };
 
-const createMockResponse = (articles: Article[], page = 1, pageSize = 10, total = 10) => ({
+const createMockResponse = (
+  articles: Article[],
+  page = 1,
+  pageSize = 10,
+  total = 10,
+  hasNext = false,
+) => ({
   articles: {
-    data: articles,
-    pagination: {
-      page,
-      pageSize,
-      total,
-      totalPages: Math.ceil(total / pageSize),
-    },
+    items: articles,
+    total,
+    page,
+    pageSize,
+    pageInfo: { hasNext },
   },
 });
 
@@ -266,9 +263,9 @@ describe('ArticleList', () => {
     );
   });
 
-  it('renders pagination when totalPages > 1', async () => {
+  it('renders pagination when pageInfo.hasNext is true', async () => {
     const articles = createArticles(5);
-    vi.mocked(executeGraphQL).mockResolvedValue(createMockResponse(articles, 1, 5, 15));
+    vi.mocked(executeGraphQL).mockResolvedValue(createMockResponse(articles, 1, 5, 15, true));
 
     render(
       <MemoryRouter>
@@ -285,9 +282,9 @@ describe('ArticleList', () => {
     expect(screen.getByTestId('pagination-total')).toHaveTextContent('共 15 篇文章');
   });
 
-  it('does not render pagination when totalPages <= 1', async () => {
+  it('does not render pagination when pageInfo.hasNext is false', async () => {
     const articles = createArticles(3);
-    vi.mocked(executeGraphQL).mockResolvedValue(createMockResponse(articles, 1, 10, 3));
+    vi.mocked(executeGraphQL).mockResolvedValue(createMockResponse(articles, 1, 10, 3, false));
 
     render(
       <MemoryRouter>
@@ -304,7 +301,7 @@ describe('ArticleList', () => {
 
   it('calls onPageChange when pagination is clicked', async () => {
     const articles = createArticles(5);
-    vi.mocked(executeGraphQL).mockResolvedValue(createMockResponse(articles, 1, 5, 15));
+    vi.mocked(executeGraphQL).mockResolvedValue(createMockResponse(articles, 1, 5, 15, true));
 
     const onPageChange = vi.fn();
 
@@ -323,7 +320,7 @@ describe('ArticleList', () => {
     expect(onPageChange).toHaveBeenCalledWith(2);
   });
 
-  it('fetches data with correct page and pageSize parameters', async () => {
+  it('fetches data with correct pagination parameters', async () => {
     render(
       <MemoryRouter>
         <ArticleList page={2} pageSize={20} />
@@ -334,7 +331,9 @@ describe('ArticleList', () => {
       expect(executeGraphQL).toHaveBeenCalled();
     });
 
-    expect(executeGraphQL).toHaveBeenCalledWith('mock query', { page: 2, pageSize: 20 });
+    expect(executeGraphQL).toHaveBeenCalledWith('mock query', {
+      pagination: { page: 2, pageSize: 20 },
+    });
   });
 
   it('refetches data when page changes', async () => {
@@ -345,8 +344,8 @@ describe('ArticleList', () => {
     }));
 
     vi.mocked(executeGraphQL)
-      .mockResolvedValueOnce(createMockResponse(articles1, 1, 2, 4))
-      .mockResolvedValueOnce(createMockResponse(articles2, 2, 2, 4));
+      .mockResolvedValueOnce(createMockResponse(articles1, 1, 2, 4, true))
+      .mockResolvedValueOnce(createMockResponse(articles2, 2, 2, 4, false));
 
     const { rerender } = render(
       <MemoryRouter>
@@ -372,6 +371,8 @@ describe('ArticleList', () => {
 
     expect(screen.getByText('Article 1 (page 2)')).toBeInTheDocument();
     expect(executeGraphQL).toHaveBeenCalledTimes(2);
-    expect(executeGraphQL).toHaveBeenLastCalledWith('mock query', { page: 2, pageSize: 2 });
+    expect(executeGraphQL).toHaveBeenLastCalledWith('mock query', {
+      pagination: { page: 2, limit: 2 },
+    });
   });
 });

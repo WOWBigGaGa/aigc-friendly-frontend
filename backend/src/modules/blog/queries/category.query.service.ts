@@ -45,4 +45,26 @@ export class CategoryQueryService {
       );
     }
   }
+
+  async getCategoryById(
+    id: string,
+    transactionContext?: PersistenceTransactionContext,
+  ): Promise<CategoryEntity | null> {
+    try {
+      return await this.categoryRepository.findById(id, transactionContext);
+    } catch (error) {
+      if (error instanceof DomainError) {
+        throw error;
+      }
+      throw new DomainError(
+        BLOG_ERROR.QUERY_FAILED,
+        '获取分类失败',
+        {
+          categoryId: id,
+          error: error instanceof Error ? error.message : '未知错误',
+        },
+        error,
+      );
+    }
+  }
 }

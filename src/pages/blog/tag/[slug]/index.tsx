@@ -7,44 +7,37 @@ import { GET_ARTICLES_BY_TAG, GET_TAGS } from '@/features/blog';
 
 import { executeGraphQL } from '@/shared/graphql';
 
-const { Title, Paragraph } = Typography;
+const { Title } = Typography;
 
 interface TagType {
   id: string;
   name: string;
   slug: string;
-  description?: string;
 }
 
 interface TagArticle {
   id: string;
   title: string;
-  slug: string;
-  excerpt: string;
+  summary: string;
+  coverImage?: string | null;
+  viewCount: number;
+  likeCount: number;
   publishedAt: string;
-  tags: {
-    id: string;
-    name: string;
-    slug: string;
-  }[];
 }
 
 interface TagResult {
-  articlesByTag: {
-    data: TagArticle[];
-    pagination: {
-      page: number;
-      pageSize: number;
-      total: number;
-      totalPages: number;
-    };
+  articles: {
+    items: TagArticle[];
+    total: number;
+    page: number;
+    pageSize: number;
+    pageInfo: { hasNext: boolean };
   };
 }
 
 interface TagVariables {
-  slug: string;
-  page?: number;
-  pageSize?: number;
+  pagination: { page: number; pageSize: number };
+  tagIds: string[];
 }
 
 interface TagsResult {
@@ -65,24 +58,35 @@ export function BlogTagPage() {
     setError(null);
 
     try {
-      const [articlesResult, tagsResult] = await Promise.all([
-        executeGraphQL<TagResult, TagVariables>(GET_ARTICLES_BY_TAG.loc?.source?.body ?? '', {
-          slug: tagSlug,
-          page,
-          pageSize: 10,
-        }),
-        executeGraphQL<TagsResult, Record<string, never>>(GET_TAGS.loc?.source?.body ?? '', {}),
-      ]);
+      const tagsResult = await executeGraphQL<TagsResult, Record<string, never>>(
+        GET_TAGS.loc?.source?.body ?? '',
+        {},
+      );
+      const foundTag = tagsResult.tags.find((t) => t.slug === tagSlug);
+
+      if (!foundTag) {
+        setTag(null);
+        setData(null);
+        return;
+      }
+
+      setTag(foundTag);
+
+      const articlesResult = await executeGraphQL<TagResult, TagVariables>(
+        GET_ARTICLES_BY_TAG.loc?.source?.body ?? '',
+        {
+          pagination: { page, pageSize: 10 },
+          tagIds: [foundTag.id],
+        },
+      );
 
       setData(articlesResult);
-      const foundTag = tagsResult.tags.find((t) => t.slug === tagSlug);
-      setTag(foundTag || null);
     } catch (err) {
       setError(err as Error);
     } finally {
       setLoading(false);
     }
-  }, [setData, setError, setLoading, setTag]);
+  }, []);
 
   useEffect(() => {
     const page = parseInt(searchParams.get('page') || '1');
@@ -110,17 +114,17 @@ export function BlogTagPage() {
 
   if (error) {
     return (
-      <Alert message="加载失败" description="标签数据加载失败，请稍后重试" type="error" showIcon />
+      <Alert title="加载失败" description="标签数据加载失败，请稍后重试" type="error" showIcon />
     );
   }
 
   if (!tag) {
     return (
-      <Alert message="标签不存在" description="该标签不存在或已被删除" type="warning" showIcon />
+      <Alert title="标签不存在" description="该标签不存在或已被删除" type="warning" showIcon />
     );
   }
 
-  const articles = data?.articlesByTag?.data || [];
+  const articles = data?.articles?.items || [];
 
   return (
     <div className="blog-tag">
@@ -136,20 +140,13 @@ export function BlogTagPage() {
             {tag.name}
           </Tag>
         </Title>
-        {tag.description && (
-          <Paragraph style={{ fontSize: '16px', color: 'var(--ant-color-text-secondary)' }}>
-            {tag.description}
-          </Paragraph>
-        )}
         <div style={{ marginTop: '16px' }}>
-          <Tag color="purple">
-            {articles.length > 0 ? data?.articlesByTag?.pagination.total : 0} 篇文章
-          </Tag>
+          <Tag color="purple">{articles.length > 0 ? data?.articles?.total : 0} 篇文章</Tag>
         </div>
       </div>
 
       {articles.length === 0 ? (
-        <Alert message="暂无文章" description="该标签下还没有发布任何文章" type="info" showIcon />
+        <Alert title="暂无文章" description="该标签下还没有发布任何文章" type="info" showIcon />
       ) : (
         <div>
           <List
@@ -189,14 +186,11 @@ export function BlogTagPage() {
                       WebkitBoxOrient: 'vertical',
                     }}
                   >
-                    {article.excerpt}
+                    {article.summary}
                   </p>
                   <div
                     style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}
                   >
-                    {article.tags.map((t) => (
-                      <Tag key={t.id}>{t.name}</Tag>
-                    ))}
                     <span
                       style={{
                         display: 'flex',
@@ -215,12 +209,12 @@ export function BlogTagPage() {
             )}
           />
 
-          {data?.articlesByTag?.pagination && data.articlesByTag.pagination.totalPages > 1 && (
+          {data?.articles?.pageInfo && data.articles.pageInfo.hasNext && (
             <div style={{ textAlign: 'center', marginTop: '32px' }}>
               <Pagination
                 current={currentPage}
                 pageSize={10}
-                total={data.articlesByTag.pagination.total}
+                total={data.articles.total}
                 onChange={handlePageChange}
                 showSizeChanger={false}
                 showTotal={(total) => `共 ${total} 篇文章`}

@@ -30,7 +30,7 @@ export class CommentResolver {
   ): Promise<PaginatedCommentsDTO> {
     const result = await this.commentQueryService.getCommentsByArticle(
       articleId,
-      pagination || { page: 1, limit: 20 },
+      pagination || { page: 1, pageSize: 20 },
     );
     return {
       items: result.items,
@@ -47,7 +47,24 @@ export class CommentResolver {
     @Args('pagination', { nullable: true }) pagination?: PaginationInput,
   ): Promise<PaginatedPendingCommentsDTO> {
     const result = await this.commentQueryService.getPendingComments(
-      pagination || { page: 1, limit: 20 },
+      pagination || { page: 1, pageSize: 20 },
+    );
+    return {
+      items: result.items,
+      total: result.total,
+      page: result.page,
+      pageSize: result.pageSize,
+      pageInfo: result.pageInfo,
+    };
+  }
+
+  @Query(() => PaginatedPendingCommentsDTO)
+  @UseGuards(JwtAuthGuard)
+  async allComments(
+    @Args('pagination', { nullable: true }) pagination?: PaginationInput,
+  ): Promise<PaginatedPendingCommentsDTO> {
+    const result = await this.commentQueryService.getAllComments(
+      pagination || { page: 1, pageSize: 20 },
     );
     return {
       items: result.items,
@@ -100,7 +117,7 @@ export class CommentResolver {
     return this.rejectCommentUsecase.execute({ id, session });
   }
 
-  @Mutation(() => Boolean)
+  @Mutation(() => CommentDTO)
   @UseGuards(JwtAuthGuard)
   async deleteComment(
     @Args('id') id: string,
@@ -112,5 +129,32 @@ export class CommentResolver {
     const session = mapJwtToUsecaseSession(context.req.user);
     await this.deleteCommentUsecase.execute({ id, session });
     return true;
+  }
+
+  @Mutation(() => CommentDTO)
+  @UseGuards(JwtAuthGuard)
+  async replyComment(
+    @Args('id') id: string,
+    @Args('content') content: string,
+    @Context()
+    context: {
+      req: { user: { sub: number; accessGroup: string[]; username: string; email: string | null } };
+    },
+  ): Promise<CommentDTO> {
+    const session = mapJwtToUsecaseSession(context.req.user);
+    const parentComment = await this.commentQueryService.getCommentById(id);
+    if (!parentComment) {
+      throw new Error('评论不存在');
+    }
+    return this.createCommentUsecase.execute({
+      input: {
+        articleId: parentComment.articleId,
+        authorName: context.req.user.username || 'Admin',
+        authorEmail: context.req.user.email || 'admin@example.com',
+        content,
+        parentId: id,
+      },
+      session,
+    });
   }
 }

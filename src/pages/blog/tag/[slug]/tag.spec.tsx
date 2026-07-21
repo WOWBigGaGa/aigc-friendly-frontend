@@ -9,25 +9,23 @@ vi.mock('@/features/blog', () => ({
     loc: {
       source: {
         body: `
-          query GetArticlesByTag($slug: String!, $page: Int, $pageSize: Int) {
-            articlesByTag(slug: $slug, page: $page, pageSize: $pageSize) {
-              data {
+          query GetArticlesByTag($pagination: PaginationInput, $tagIds: [String!]!) {
+            articles(pagination: $pagination, filter: { tagIds: $tagIds }) {
+              items {
                 id
                 title
-                slug
-                excerpt
+                summary
+                coverImage
+                viewCount
+                likeCount
                 publishedAt
-                tags {
-                  id
-                  name
-                  slug
-                }
+                createdAt
               }
-              pagination {
-                page
-                pageSize
-                total
-                totalPages
+              total
+              page
+              pageSize
+              pageInfo {
+                hasNext
               }
             }
           }
@@ -44,7 +42,8 @@ vi.mock('@/features/blog', () => ({
               id
               name
               slug
-              description
+              createdAt
+              updatedAt
             }
           }
         `,
@@ -66,16 +65,16 @@ vi.mock('antd', async (importOriginal) => {
   return {
     ...actual,
     Alert: ({
-      message,
+      title,
       description,
       type,
     }: {
-      message?: React.ReactNode;
+      title?: React.ReactNode;
       description?: React.ReactNode;
       type?: string;
     }) => (
       <div data-testid="alert" data-type={type}>
-        <div data-testid="alert-message">{message}</div>
+        <div data-testid="alert-message">{title}</div>
         {description && <div data-testid="alert-description">{description}</div>}
       </div>
     ),
@@ -145,46 +144,38 @@ describe('BlogTagPage', () => {
       slug === 'invalid-tag'
         ? []
         : [
-            { id: 'tag-1', name: 'React', slug: 'react', description: 'React articles' },
-            {
-              id: 'tag-2',
-              name: 'TypeScript',
-              slug: 'typescript',
-              description: 'TypeScript articles',
-            },
+            { id: 'tag-1', name: 'React', slug: 'react' },
+            { id: 'tag-2', name: 'TypeScript', slug: 'typescript' },
           ],
   });
 
-  const mockArticlesByTag = (slug: string, page: number) => ({
-    articlesByTag: {
-      data:
+  const mockArticlesByTag = (slug: string, page: number, hasNext = false) => ({
+    articles: {
+      items:
         slug === 'empty-tag'
           ? []
           : [
               {
                 id: 'article-1',
                 title: 'Test Article',
-                slug: 'test-article',
-                excerpt: 'This is a test article.',
+                summary: 'This is a test article.',
+                coverImage: null,
+                viewCount: 10,
+                likeCount: 5,
                 publishedAt: '2024-01-15T00:00:00Z',
-                tags: [
-                  { id: 'tag-1', name: 'React', slug: 'react' },
-                  { id: 'tag-2', name: 'TypeScript', slug: 'typescript' },
-                ],
+                createdAt: '2024-01-15T00:00:00Z',
               },
             ],
-      pagination: {
-        page,
-        pageSize: 10,
-        total: slug === 'empty-tag' ? 0 : 1,
-        totalPages: 1,
-      },
+      total: slug === 'empty-tag' ? 0 : 1,
+      page,
+      pageSize: 10,
+      pageInfo: { hasNext },
     },
   });
 
   it('renders tag name with tag style', async () => {
-    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticlesByTag('react', 1));
     vi.mocked(executeGraphQL).mockResolvedValueOnce(mockTags('react'));
+    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticlesByTag('react', 1));
 
     render(
       <MemoryRouter initialEntries={['/blog/tag/react']}>
@@ -200,12 +191,11 @@ describe('BlogTagPage', () => {
 
     const tags = screen.getAllByTestId('tag');
     expect(tags.some((tag) => tag.textContent === 'React')).toBe(true);
-    expect(screen.getByTestId('paragraph')).toHaveTextContent('React articles');
   });
 
-  it('renders article list with tags for each article', async () => {
-    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticlesByTag('react', 1));
+  it('renders article list for tag', async () => {
     vi.mocked(executeGraphQL).mockResolvedValueOnce(mockTags('react'));
+    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticlesByTag('react', 1));
 
     render(
       <MemoryRouter initialEntries={['/blog/tag/react']}>
@@ -220,16 +210,14 @@ describe('BlogTagPage', () => {
     });
 
     expect(screen.getByText('Test Article')).toBeInTheDocument();
-    const tags = screen.getAllByTestId('tag');
-    expect(tags.some((tag) => tag.textContent === 'React')).toBe(true);
-    expect(tags.some((tag) => tag.textContent === 'TypeScript')).toBe(true);
+    expect(screen.getByText('This is a test article.')).toBeInTheDocument();
   });
 
   it('renders no articles message when tag is empty', async () => {
-    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticlesByTag('empty-tag', 1));
     vi.mocked(executeGraphQL).mockResolvedValueOnce({
-      tags: [{ id: 'tag-3', name: 'Empty', slug: 'empty-tag', description: '' }],
+      tags: [{ id: 'tag-3', name: 'Empty', slug: 'empty-tag' }],
     });
+    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticlesByTag('empty-tag', 1));
 
     render(
       <MemoryRouter initialEntries={['/blog/tag/empty-tag']}>
@@ -247,7 +235,6 @@ describe('BlogTagPage', () => {
   });
 
   it('renders not found message when tag does not exist', async () => {
-    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticlesByTag('invalid-tag', 1));
     vi.mocked(executeGraphQL).mockResolvedValueOnce(mockTags('invalid-tag'));
 
     render(
@@ -288,7 +275,7 @@ describe('BlogTagPage', () => {
   it('renders loading state initially', () => {
     vi.mocked(executeGraphQL).mockImplementation(async () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
-      return mockArticlesByTag('react', 1);
+      return mockTags('react');
     });
 
     render(

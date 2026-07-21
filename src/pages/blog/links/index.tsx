@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Alert, Card, Spin, Typography } from 'antd';
+import { Card, Spin, Typography } from 'antd';
 
-import { GET_ACTIVE_FRIEND_LINKS } from '@/features/blog';
+import { GET_FRIEND_LINKS } from '@/features/blog/infrastructure/queries';
 
 import { executeGraphQL } from '@/shared/graphql';
 import { LazyImage } from '@/shared/ui/lazy-image';
@@ -14,10 +14,10 @@ interface FriendLink {
   url: string;
   description: string | null;
   logo: string | null;
-}
-
-interface FriendLinksQueryResult {
-  activeFriendLinks: FriendLink[];
+  sort: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export function BlogLinksPage() {
@@ -29,16 +29,11 @@ export function BlogLinksPage() {
     const fetchFriendLinks = async () => {
       setLoading(true);
       setError(null);
-
       try {
-        const queryBody = GET_ACTIVE_FRIEND_LINKS.loc?.source?.body ?? '';
-        const result = await executeGraphQL<FriendLinksQueryResult, Record<string, never>>(
-          queryBody,
-          {},
-        );
-        setFriendLinks(result.activeFriendLinks);
+        const queryBody = GET_FRIEND_LINKS.loc?.source?.body ?? '';
+        const result = await executeGraphQL<{ friendLinks: FriendLink[] }, {}>(queryBody, {});
+        setFriendLinks(result.friendLinks);
       } catch (err) {
-        console.error('Failed to fetch friend links:', err);
         setError(err as Error);
       } finally {
         setLoading(false);
@@ -50,15 +45,29 @@ export function BlogLinksPage() {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px' }}>
-        <Spin size="large" />
+      <div className="blog-links">
+        <Card className="links-header">
+          <Title level={2}>友情链接</Title>
+          <Paragraph>感谢以下朋友的支持与链接交换</Paragraph>
+        </Card>
+        <Card className="links-empty">
+          <Spin size="large" tip="加载中..." />
+        </Card>
       </div>
     );
   }
 
   if (error) {
     return (
-      <Alert message="加载失败" description="友链列表加载失败，请稍后重试" type="error" showIcon />
+      <div className="blog-links">
+        <Card className="links-header">
+          <Title level={2}>友情链接</Title>
+          <Paragraph>感谢以下朋友的支持与链接交换</Paragraph>
+        </Card>
+        <Card className="links-empty">
+          <Paragraph>加载友链失败，请稍后重试</Paragraph>
+        </Card>
+      </div>
     );
   }
 

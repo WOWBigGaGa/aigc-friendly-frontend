@@ -22,28 +22,25 @@ interface ArchivesResult {
 interface ArchiveArticle {
   id: string;
   title: string;
-  slug: string;
-  excerpt: string;
+  summary: string;
+  coverImage?: string | null;
+  viewCount: number;
+  likeCount: number;
   publishedAt: string;
 }
 
 interface ArchiveArticlesResult {
   articles: {
-    data: ArchiveArticle[];
-    pagination: {
-      page: number;
-      pageSize: number;
-      total: number;
-      totalPages: number;
-    };
+    items: ArchiveArticle[];
+    total: number;
+    page: number;
+    pageSize: number;
+    pageInfo: { hasNext: boolean };
   };
 }
 
 interface ArchiveVariables {
-  page?: number;
-  pageSize?: number;
-  year?: number;
-  month?: number;
+  pagination: { page: number; pageSize: number };
 }
 
 export function BlogArchivePage() {
@@ -55,13 +52,7 @@ export function BlogArchivePage() {
   const [archives, setArchives] = useState<Archive[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    const page = parseInt(searchParams.get('page') || '1');
-    setCurrentPage(page);
-    fetchArchiveData(parseInt(year!), parseInt(month!), page);
-  }, [year, month, searchParams.get('page')]);
-
-  const fetchArchiveData = async (archiveYear: number, archiveMonth: number, page: number) => {
+  const fetchArchiveData = async (page: number) => {
     setLoading(true);
     setError(null);
 
@@ -69,27 +60,33 @@ export function BlogArchivePage() {
       const [articlesResult, archivesResult] = await Promise.all([
         executeGraphQL<ArchiveArticlesResult, ArchiveVariables>(
           `
-            query GetArticlesByDate($page: Int, $pageSize: Int, $year: Int, $month: Int) {
-              articles(page: $page, pageSize: $pageSize, filter: {year: $year, month: $month}) {
-                data {
+            query GetArchiveArticles($pagination: PaginationInput) {
+              articles(pagination: $pagination) {
+                items {
                   id
                   title
-                  slug
-                  excerpt
+                  summary
+                  coverImage
+                  viewCount
+                  likeCount
                   publishedAt
+                  createdAt
                 }
-                pagination {
-                  page
-                  pageSize
-                  total
-                  totalPages
+                total
+                page
+                pageSize
+                pageInfo {
+                  hasNext
                 }
               }
             }
           `,
-          { page, pageSize: 10, year: archiveYear, month: archiveMonth },
+          { pagination: { page, pageSize: 10 } },
         ),
-        executeGraphQL<ArchivesResult, {}>(GET_ARCHIVES.loc?.source?.body ?? '', {}),
+        executeGraphQL<ArchivesResult, Record<string, never>>(
+          GET_ARCHIVES.loc?.source?.body ?? '',
+          {},
+        ),
       ]);
 
       setData(articlesResult);
@@ -100,6 +97,12 @@ export function BlogArchivePage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const page = parseInt(searchParams.get('page') || '1');
+    setCurrentPage(page);
+    fetchArchiveData(page);
+  }, [year, month, searchParams.get('page')]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -124,11 +127,11 @@ export function BlogArchivePage() {
 
   if (error) {
     return (
-      <Alert message="加载失败" description="归档数据加载失败，请稍后重试" type="error" showIcon />
+      <Alert title="加载失败" description="归档数据加载失败，请稍后重试" type="error" showIcon />
     );
   }
 
-  const articles = data?.articles?.data || [];
+  const articles = data?.articles?.items || [];
   const currentArchive = archives.find((a) => a.year === archiveYear && a.month === archiveMonth);
 
   return (
@@ -177,7 +180,7 @@ export function BlogArchivePage() {
       </div>
 
       {articles.length === 0 ? (
-        <Alert message="暂无文章" description="该月份还没有发布任何文章" type="info" showIcon />
+        <Alert title="暂无文章" description="还没有发布任何文章" type="info" showIcon />
       ) : (
         <div>
           <List
@@ -217,7 +220,7 @@ export function BlogArchivePage() {
                       WebkitBoxOrient: 'vertical',
                     }}
                   >
-                    {article.excerpt}
+                    {article.summary}
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span
@@ -238,12 +241,12 @@ export function BlogArchivePage() {
             )}
           />
 
-          {data?.articles?.pagination && data.articles.pagination.totalPages > 1 && (
+          {data?.articles?.pageInfo && data.articles.pageInfo.hasNext && (
             <div style={{ textAlign: 'center', marginTop: '32px' }}>
               <Pagination
                 current={currentPage}
                 pageSize={10}
-                total={data.articles.pagination.total}
+                total={data.articles.total}
                 onChange={handlePageChange}
                 showSizeChanger={false}
                 showTotal={(total) => `共 ${total} 篇文章`}

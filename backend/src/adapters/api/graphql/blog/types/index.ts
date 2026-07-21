@@ -1,4 +1,5 @@
 export { ArticleDTO } from './article.dto';
+export { AdjacentArticlesDTO } from './adjacent-articles.dto';
 export { CategoryDTO } from './category.dto';
 export { TagDTO } from './tag.dto';
 export { CommentDTO } from './comment.dto';

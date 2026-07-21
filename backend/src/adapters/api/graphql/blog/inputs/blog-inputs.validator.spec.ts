@@ -281,7 +281,7 @@ describe('Blog GraphQL Input Validators', () => {
     it('should validate default values', async () => {
       const input = plainToInstance(PaginationInput, {
         page: 1,
-        limit: 10,
+        pageSize: 10,
       });
 
       const errors = await validate(input);
@@ -291,7 +291,7 @@ describe('Blog GraphQL Input Validators', () => {
     it('should reject page less than 1', async () => {
       const input = plainToInstance(PaginationInput, {
         page: 0,
-        limit: 10,
+        pageSize: 10,
       });
 
       const errors = await validate(input);
@@ -300,34 +300,34 @@ describe('Blog GraphQL Input Validators', () => {
       expect(pageError).toBeDefined();
     });
 
-    it('should reject limit less than 1', async () => {
+    it('should reject pageSize less than 1', async () => {
       const input = plainToInstance(PaginationInput, {
         page: 1,
-        limit: 0,
+        pageSize: 0,
       });
 
       const errors = await validate(input);
       expect(errors.length).toBeGreaterThan(0);
-      const limitError = errors.find((e) => e.property === 'limit');
-      expect(limitError).toBeDefined();
+      const pageSizeError = errors.find((e) => e.property === 'pageSize');
+      expect(pageSizeError).toBeDefined();
     });
 
-    it('should reject limit greater than 100', async () => {
+    it('should reject pageSize greater than 100', async () => {
       const input = plainToInstance(PaginationInput, {
         page: 1,
-        limit: 101,
+        pageSize: 101,
       });
 
       const errors = await validate(input);
       expect(errors.length).toBeGreaterThan(0);
-      const limitError = errors.find((e) => e.property === 'limit');
-      expect(limitError).toBeDefined();
+      const pageSizeError = errors.find((e) => e.property === 'pageSize');
+      expect(pageSizeError).toBeDefined();
     });
 
     it('should reject non-integer page', async () => {
       const input = plainToInstance(PaginationInput, {
         page: 'abc',
-        limit: 10,
+        pageSize: 10,
       });
 
       const errors = await validate(input);

@@ -5,22 +5,11 @@ import { useNavigate } from 'react-router';
 export interface Article {
   id: string;
   title: string;
-  slug: string;
-  excerpt: string;
+  summary: string;
   content: string;
   viewCount: number;
   likeCount: number;
   publishedAt: string;
-  category?: {
-    id: string;
-    name: string;
-    slug: string;
-  };
-  tags: Array<{
-    id: string;
-    name: string;
-    slug: string;
-  }>;
   isPinned?: boolean;
 }
 
@@ -42,7 +31,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
 
   return (
     <div className="article-card">
-      <Card hoverable onClick={handleClick} bordered={false} bodyStyle={{ padding: '20px' }}>
+      <Card hoverable onClick={handleClick} variant="borderless" bodyStyle={{ padding: '20px' }}>
         {article.isPinned && (
           <Tag color="red" style={{ marginBottom: '8px' }}>
             置顶
@@ -61,35 +50,8 @@ export function ArticleCard({ article }: ArticleCardProps) {
             lineHeight: '1.6',
           }}
         >
-          {article.excerpt || article.content.substring(0, 150)}...
+          {article.summary || article.content.substring(0, 150)}...
         </p>
-
-        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-          {article.category && (
-            <Tag
-              color="blue"
-              onClick={(e) => {
-                e.stopPropagation();
-                const categorySlug = article.category?.slug ?? '';
-                navigate(`/blog/category/${categorySlug}`);
-              }}
-            >
-              {article.category.name}
-            </Tag>
-          )}
-
-          {article.tags.slice(0, 3).map((tag) => (
-            <Tag
-              key={tag.id}
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/blog/tag/${tag.slug}`);
-              }}
-            >
-              {tag.name}
-            </Tag>
-          ))}
-        </div>
 
         <div
           style={{

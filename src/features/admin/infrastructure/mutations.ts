@@ -1,12 +1,16 @@
 export const ADMIN_LOGIN = `
-  mutation AdminLogin($username: String!, $password: String!) {
-    adminLogin(username: $username, password: $password) {
-      token
-      user {
+  mutation AdminLogin($loginName: String!, $loginPassword: String!, $type: LoginTypeEnum!, $audience: AudienceTypeEnum!) {
+    login(input: { loginName: $loginName, loginPassword: $loginPassword, type: $type, audience: $audience }) {
+      accessToken
+      refreshToken
+      accountId
+      role
+      userInfo {
         id
-        username
+        accountId
+        nickname
         email
-        roles
+        avatarUrl
       }
     }
   }
@@ -106,6 +110,62 @@ export const ADMIN_TOGGLE_ARTICLE_STATUS = `
     toggleArticleStatus(id: $id, status: $status) {
       id
       status
+    }
+  }
+`;
+
+export const ADMIN_CHANGE_PASSWORD = `
+  mutation AdminChangePassword($input: ChangePasswordInput!) {
+    changePassword(input: $input) {
+      success
+      message
+    }
+  }
+`;
+
+export const ADMIN_CREATE_FRIEND_LINK = `
+  mutation AdminCreateFriendLink($name: String!, $url: String!, $description: String, $logo: String, $sort: Int) {
+    createFriendLink(name: $name, url: $url, description: $description, logo: $logo, sort: $sort) {
+      id
+      name
+      url
+      description
+      logo
+      sort
+      isActive
+    }
+  }
+`;
+
+export const ADMIN_UPDATE_FRIEND_LINK = `
+  mutation AdminUpdateFriendLink($id: String!, $name: String, $url: String, $description: String, $logo: String, $sort: Int, $isActive: Boolean) {
+    updateFriendLink(id: $id, name: $name, url: $url, description: $description, logo: $logo, sort: $sort, isActive: $isActive) {
+      id
+      name
+      url
+      description
+      logo
+      sort
+      isActive
+    }
+  }
+`;
+
+export const ADMIN_DELETE_FRIEND_LINK = `
+  mutation AdminDeleteFriendLink($id: String!) {
+    deleteFriendLink(id: $id)
+  }
+`;
+
+export const ADMIN_UPDATE_USER_INFO = `
+  mutation AdminUpdateUserInfo($input: UpdateUserInfoInput!) {
+    updateUserInfo(input: $input) {
+      isUpdated
+      userInfo {
+        id
+        nickname
+        signature
+      }
     }
   }
 `;

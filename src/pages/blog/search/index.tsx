@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ClockCircleOutlined, SearchOutlined } from '@ant-design/icons';
-import { Alert, Input, List, Pagination, Spin, Tag, Typography } from 'antd';
+import { Alert, Input, List, Pagination, Spin, Typography } from 'antd';
 import { useSearchParams } from 'react-router';
 
 import { SEARCH_ARTICLES } from '@/features/blog';
@@ -12,32 +12,26 @@ const { Title, Paragraph } = Typography;
 interface SearchArticle {
   id: string;
   title: string;
-  slug: string;
-  excerpt: string;
+  summary: string;
+  coverImage?: string | null;
+  viewCount: number;
+  likeCount: number;
   publishedAt: string;
-  category?: {
-    id: string;
-    name: string;
-    slug: string;
-  };
 }
 
 interface SearchResult {
-  searchArticles: {
-    data: SearchArticle[];
-    pagination: {
-      page: number;
-      pageSize: number;
-      total: number;
-      totalPages: number;
-    };
+  articles: {
+    items: SearchArticle[];
+    total: number;
+    page: number;
+    pageSize: number;
+    pageInfo: { hasNext: boolean };
   };
 }
 
 interface SearchVariables {
+  pagination: { page: number; pageSize: number };
   keyword: string;
-  page?: number;
-  pageSize?: number;
 }
 
 function highlightKeyword(text: string, keyword: string): React.ReactNode {
@@ -76,9 +70,8 @@ export function BlogSearchPage() {
     try {
       const queryBody = SEARCH_ARTICLES.loc?.source?.body ?? '';
       const result = await executeGraphQL<SearchResult, SearchVariables>(queryBody, {
+        pagination: { page, pageSize: 10 },
         keyword: searchKeyword,
-        page,
-        pageSize: 10,
       });
       setData(result);
     } catch (err) {
@@ -86,7 +79,7 @@ export function BlogSearchPage() {
     } finally {
       setLoading(false);
     }
-  }, [setData, setError, setLoading]);
+  }, []);
 
   useEffect(() => {
     const q = searchParams.get('q');
@@ -140,7 +133,7 @@ export function BlogSearchPage() {
         </div>
       ) : error ? (
         <Alert
-          message="搜索失败"
+          title="搜索失败"
           description="搜索过程中发生错误，请稍后重试"
           type="error"
           showIcon
@@ -154,9 +147,9 @@ export function BlogSearchPage() {
             支持搜索文章标题和内容
           </Paragraph>
         </div>
-      ) : data?.searchArticles?.data.length === 0 ? (
+      ) : data?.articles?.items.length === 0 ? (
         <Alert
-          message="未找到相关文章"
+          title="未找到相关文章"
           description={`没有找到包含 "${keyword}" 的文章`}
           type="info"
           showIcon
@@ -164,11 +157,11 @@ export function BlogSearchPage() {
       ) : (
         <div>
           <Paragraph style={{ marginBottom: '16px' }}>
-            找到 <strong>{data?.searchArticles?.pagination.total}</strong> 篇相关文章
+            找到 <strong>{data?.articles?.total}</strong> 篇相关文章
           </Paragraph>
 
           <List
-            dataSource={data?.searchArticles?.data}
+            dataSource={data?.articles?.items}
             renderItem={(article) => (
               <List.Item
                 key={article.id}
@@ -204,12 +197,11 @@ export function BlogSearchPage() {
                       WebkitBoxOrient: 'vertical',
                     }}
                   >
-                    {highlightKeyword(article.excerpt, keyword)}
+                    {highlightKeyword(article.summary, keyword)}
                   </p>
                   <div
                     style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}
                   >
-                    {article.category && <Tag color="blue">{article.category.name}</Tag>}
                     <span
                       style={{
                         display: 'flex',
@@ -228,12 +220,12 @@ export function BlogSearchPage() {
             )}
           />
 
-          {data?.searchArticles?.pagination && data.searchArticles.pagination.totalPages > 1 && (
+          {data?.articles?.pageInfo && data.articles.pageInfo.hasNext && (
             <div style={{ textAlign: 'center', marginTop: '32px' }}>
               <Pagination
                 current={currentPage}
                 pageSize={10}
-                total={data.searchArticles.pagination.total}
+                total={data.articles.total}
                 onChange={handlePageChange}
                 showSizeChanger={false}
                 showTotal={(total) => `共 ${total} 篇文章`}

@@ -1,68 +1,57 @@
-// src/shared/graphql/blog/queries.ts
-
 import { gql } from '@apollo/client';
 
+// 文章列表（支持分页、筛选、搜索）
 export const GET_ARTICLES = gql`
-  query GetArticles($page: Int, $pageSize: Int) {
-    articles(page: $page, pageSize: $pageSize) {
-      data {
+  query GetArticles($pagination: PaginationInput, $filter: ArticleFilterInput) {
+    articles(pagination: $pagination, filter: $filter) {
+      items {
         id
         title
-        slug
-        excerpt
-        content
+        summary
+        coverImage
         status
+        categoryId
+        authorId
         viewCount
         likeCount
-        publishedAt
         isPinned
-        category {
-          id
-          name
-          slug
-        }
-        tags {
-          id
-          name
-          slug
-        }
+        publishedAt
+        createdAt
+        updatedAt
       }
-      pagination {
-        page
-        pageSize
-        total
-        totalPages
+      total
+      page
+      pageSize
+      pageInfo {
+        hasNext
       }
     }
   }
 `;
 
+// 文章详情
 export const GET_ARTICLE_BY_ID = gql`
-  query GetArticleById($id: ID!) {
+  query GetArticleById($id: String!) {
     article(id: $id) {
       id
       title
-      slug
-      excerpt
       content
+      summary
+      coverImage
       status
+      categoryId
+      authorId
       viewCount
       likeCount
+      isPinned
       publishedAt
-      category {
-        id
-        name
-        slug
-      }
-      tags {
-        id
-        name
-        slug
-      }
+      createdAt
+      updatedAt
     }
   }
 `;
 
+// 分类列表
 export const GET_CATEGORIES = gql`
   query GetCategories {
     categories {
@@ -70,97 +59,102 @@ export const GET_CATEGORIES = gql`
       name
       slug
       description
-      parentId
+      sort
+      createdAt
+      updatedAt
     }
   }
 `;
 
+// 标签列表
 export const GET_TAGS = gql`
   query GetTags {
     tags {
       id
       name
       slug
-      description
+      createdAt
+      updatedAt
     }
   }
 `;
 
+// 搜索文章（复用 articles 接口，通过 keyword 筛选）
 export const SEARCH_ARTICLES = gql`
-  query SearchArticles($keyword: String!, $page: Int, $pageSize: Int) {
-    searchArticles(keyword: $keyword, page: $page, pageSize: $pageSize) {
-      data {
+  query SearchArticles($pagination: PaginationInput, $keyword: String) {
+    articles(pagination: $pagination, filter: { keyword: $keyword }) {
+      items {
         id
         title
-        slug
-        excerpt
+        summary
+        coverImage
+        status
+        viewCount
+        likeCount
         publishedAt
-        category {
-          id
-          name
-          slug
-        }
+        createdAt
       }
-      pagination {
-        page
-        pageSize
-        total
-        totalPages
+      total
+      page
+      pageSize
+      pageInfo {
+        hasNext
       }
     }
   }
 `;
 
+// 按分类筛选文章（前端先查 categories 获取 categoryId，再调用此查询）
 export const GET_ARTICLES_BY_CATEGORY = gql`
-  query GetArticlesByCategory($slug: String!, $page: Int, $pageSize: Int) {
-    articlesByCategory(slug: $slug, page: $page, pageSize: $pageSize) {
-      data {
+  query GetArticlesByCategory($pagination: PaginationInput, $categoryId: String!) {
+    articles(pagination: $pagination, filter: { categoryId: $categoryId }) {
+      items {
         id
         title
-        slug
-        excerpt
+        summary
+        coverImage
+        status
+        viewCount
+        likeCount
         publishedAt
-        category {
-          id
-          name
-          slug
-        }
+        createdAt
       }
-      pagination {
-        page
-        pageSize
-        total
-        totalPages
+      total
+      page
+      pageSize
+      pageInfo {
+        hasNext
       }
     }
   }
 `;
 
+// 按标签筛选文章（前端先查 tags 获取 tagId，再调用此查询）
 export const GET_ARTICLES_BY_TAG = gql`
-  query GetArticlesByTag($slug: String!, $page: Int, $pageSize: Int) {
-    articlesByTag(slug: $slug, page: $page, pageSize: $pageSize) {
-      data {
+  query GetArticlesByTag($pagination: PaginationInput, $tagIds: [String!]!) {
+    articles(pagination: $pagination, filter: { tagIds: $tagIds }) {
+      items {
         id
         title
-        slug
-        excerpt
+        summary
+        coverImage
+        status
+        viewCount
+        likeCount
         publishedAt
-        tags {
-          id
-          name
-          slug
-        }
+        createdAt
       }
-      pagination {
-        page
-        pageSize
-        total
-        totalPages
+      total
+      page
+      pageSize
+      pageInfo {
+        hasNext
       }
     }
   }
 `;
 
+// 归档
 export const GET_ARCHIVES = gql`
   query GetArchives {
     archives {
@@ -171,26 +165,27 @@ export const GET_ARCHIVES = gql`
   }
 `;
 
-export const GET_ADJACENT_ARTICLES = gql`
-  query GetAdjacentArticles($id: ID!) {
-    adjacentArticles(id: $id) {
-      prev {
-        id
-        title
-        slug
-      }
-      next {
-        id
-        title
-        slug
-      }
+// 友链列表
+export const GET_FRIEND_LINKS = gql`
+  query GetFriendLinks {
+    friendLinks {
+      id
+      name
+      url
+      description
+      logo
+      sort
+      isActive
+      createdAt
+      updatedAt
     }
   }
 `;
 
+// 评论列表
 export const GET_COMMENTS = gql`
-  query GetComments($articleId: ID!, $page: Int, $pageSize: Int) {
-    comments(articleId: $articleId, pagination: { page: $page, limit: $pageSize }) {
+  query GetComments($articleId: String!, $pagination: PaginationInput) {
+    comments(articleId: $articleId, pagination: $pagination) {
       items {
         id
         articleId
@@ -206,44 +201,9 @@ export const GET_COMMENTS = gql`
       total
       page
       pageSize
-    }
-  }
-`;
-
-export const GET_FRIEND_LINKS = gql`
-  query GetFriendLinks {
-    friendLinks {
-      id
-      name
-      url
-      description
-      logo
-    }
-  }
-`;
-
-export const GET_ACTIVE_FRIEND_LINKS = gql`
-  query GetActiveFriendLinks {
-    activeFriendLinks {
-      id
-      name
-      url
-      description
-      logo
-    }
-  }
-`;
-
-export const GET_BLOG_PROFILE = gql`
-  query GetBlogProfile {
-    blogProfile {
-      name
-      avatar
-      bio
-      githubUrl
-      email
-      websiteUrl
-      skills
+      pageInfo {
+        hasNext
+      }
     }
   }
 `;

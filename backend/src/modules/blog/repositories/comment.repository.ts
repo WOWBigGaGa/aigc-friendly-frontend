@@ -239,6 +239,37 @@ export class CommentRepository {
   }
 
   /**
+   * 分页查询所有评论（管理后台用）
+   */
+  async findAll(
+    page: number,
+    limit: number,
+    transactionContext?: PersistenceTransactionContext,
+  ): Promise<{ items: CommentEntity[]; total: number }> {
+    try {
+      const repository = this.getRepository(transactionContext);
+      const [items, total] = await repository.findAndCount({
+        where: { deletedAt: IsNull() },
+        order: { createdAt: 'DESC' },
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+      return { items, total };
+    } catch (error) {
+      throw new DomainError(
+        BLOG_ERROR.QUERY_FAILED,
+        '查询评论失败',
+        {
+          page,
+          limit,
+          error: error instanceof Error ? error.message : '未知错误',
+        },
+        error,
+      );
+    }
+  }
+
+  /**
    * 查询评论的层级深度
    */
   async getCommentDepth(

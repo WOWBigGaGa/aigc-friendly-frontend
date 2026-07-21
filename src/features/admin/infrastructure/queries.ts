@@ -13,8 +13,8 @@ export const ADMIN_DASHBOARD_STATS = `
 `;
 
 export const ADMIN_PENDING_COMMENTS = `
-  query AdminPendingComments($page: Int, $limit: Int) {
-    pendingComments(pagination: { page: $page, limit: $limit }) {
+  query AdminPendingComments($page: Int, $pageSize: Int) {
+    pendingComments(pagination: { page: $page, pageSize: $pageSize }) {
       items {
         id
         articleId
@@ -32,8 +32,8 @@ export const ADMIN_PENDING_COMMENTS = `
 `;
 
 export const ADMIN_RECENT_ARTICLES = `
-  query AdminRecentArticles($page: Int, $limit: Int) {
-    articles(pagination: { page: $page, limit: $limit }) {
+  query AdminRecentArticles($page: Int, $pageSize: Int) {
+    articles(pagination: { page: $page, pageSize: $pageSize }) {
       items {
         id
         title
@@ -41,10 +41,6 @@ export const ADMIN_RECENT_ARTICLES = `
         viewCount
         likeCount
         publishedAt
-        category {
-          id
-          name
-        }
       }
       total
       page
@@ -54,12 +50,11 @@ export const ADMIN_RECENT_ARTICLES = `
 `;
 
 export const ADMIN_ALL_COMMENTS = `
-  query AdminAllComments($page: Int, $limit: Int) {
-    allComments(pagination: { page: $page, limit: $limit }) {
+  query AdminAllComments($page: Int, $pageSize: Int) {
+    allComments(pagination: { page: $page, pageSize: $pageSize }) {
       items {
         id
         articleId
-        articleTitle
         authorName
         authorEmail
         content

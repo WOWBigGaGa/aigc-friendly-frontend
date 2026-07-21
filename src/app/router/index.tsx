@@ -132,8 +132,16 @@ const router = createBrowserRouter([
   {
     children: [
       {
-        element: <HomePage />,
+        element: (
+          <Suspense fallback={<SuspenseFallback />}>
+            <BlogHomePage />
+          </Suspense>
+        ),
         index: true,
+      },
+      {
+        element: <HomePage />,
+        path: 'home',
       },
       {
         element: <ProjectStructurePage />,
@@ -155,14 +163,6 @@ const router = createBrowserRouter([
       },
       {
         children: [
-          {
-            element: (
-              <Suspense fallback={<SuspenseFallback />}>
-                <BlogHomePage />
-              </Suspense>
-            ),
-            index: true,
-          },
           {
             element: (
               <Suspense fallback={<SuspenseFallback />}>
@@ -234,7 +234,7 @@ const router = createBrowserRouter([
         path: '*',
       },
     ],
-    element: <AppLayout />,
+    element: <BlogLayout />,
     errorElement: <RouteErrorBoundary />,
     path: '/',
   },

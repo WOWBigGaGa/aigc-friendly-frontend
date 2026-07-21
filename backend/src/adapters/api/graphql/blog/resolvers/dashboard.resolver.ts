@@ -25,7 +25,7 @@ export class DashboardResolver {
         this.categoryQueryService.getCategoryCount(),
         this.tagQueryService.getTagCount(),
         this.articleQueryService.getArticleStats(),
-        this.commentQueryService.getPendingComments({ page: 1, limit: 1 }),
+        this.commentQueryService.getPendingComments({ page: 1, pageSize: 1 }),
         this.commentQueryService.getTotalCommentCount(),
       ]);
 

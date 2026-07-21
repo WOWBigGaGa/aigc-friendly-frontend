@@ -13,39 +13,32 @@ interface Category {
   id: string;
   name: string;
   slug: string;
-  description?: string;
-  parentId?: string;
+  description?: string | null;
 }
 
 interface CategoryArticle {
   id: string;
   title: string;
-  slug: string;
-  excerpt: string;
+  summary: string;
+  coverImage?: string | null;
+  viewCount: number;
+  likeCount: number;
   publishedAt: string;
-  category: {
-    id: string;
-    name: string;
-    slug: string;
-  };
 }
 
 interface CategoryResult {
-  articlesByCategory: {
-    data: CategoryArticle[];
-    pagination: {
-      page: number;
-      pageSize: number;
-      total: number;
-      totalPages: number;
-    };
+  articles: {
+    items: CategoryArticle[];
+    total: number;
+    page: number;
+    pageSize: number;
+    pageInfo: { hasNext: boolean };
   };
 }
 
 interface CategoryVariables {
-  slug: string;
-  page?: number;
-  pageSize?: number;
+  pagination: { page: number; pageSize: number };
+  categoryId: string;
 }
 
 interface CategoriesResult {
@@ -61,34 +54,46 @@ export function BlogCategoryPage() {
   const [category, setCategory] = useState<Category | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    const page = parseInt(searchParams.get('page') || '1');
-    setCurrentPage(page);
-    fetchCategoryData(slug!, page);
-  }, [slug, searchParams.get('page')]);
-
   const fetchCategoryData = async (categorySlug: string, page: number) => {
     setLoading(true);
     setError(null);
 
     try {
-      const [articlesResult, categoriesResult] = await Promise.all([
-        executeGraphQL<CategoryResult, CategoryVariables>(
-          GET_ARTICLES_BY_CATEGORY.loc?.source?.body ?? '',
-          { slug: categorySlug, page, pageSize: 10 },
-        ),
-        executeGraphQL<CategoriesResult, {}>(GET_CATEGORIES.loc?.source?.body ?? '', {}),
-      ]);
+      const categoriesResult = await executeGraphQL<CategoriesResult, Record<string, never>>(
+        GET_CATEGORIES.loc?.source?.body ?? '',
+        {},
+      );
+      const foundCategory = categoriesResult.categories.find((c) => c.slug === categorySlug);
+
+      if (!foundCategory) {
+        setCategory(null);
+        setData(null);
+        return;
+      }
+
+      setCategory(foundCategory);
+
+      const articlesResult = await executeGraphQL<CategoryResult, CategoryVariables>(
+        GET_ARTICLES_BY_CATEGORY.loc?.source?.body ?? '',
+        {
+          pagination: { page, pageSize: 10 },
+          categoryId: foundCategory.id,
+        },
+      );
 
       setData(articlesResult);
-      const foundCategory = categoriesResult.categories.find((c) => c.slug === categorySlug);
-      setCategory(foundCategory || null);
     } catch (err) {
       setError(err as Error);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const page = parseInt(searchParams.get('page') || '1');
+    setCurrentPage(page);
+    fetchCategoryData(slug!, page);
+  }, [slug, searchParams.get('page')]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -110,17 +115,17 @@ export function BlogCategoryPage() {
 
   if (error) {
     return (
-      <Alert message="加载失败" description="分类数据加载失败，请稍后重试" type="error" showIcon />
+      <Alert title="加载失败" description="分类数据加载失败，请稍后重试" type="error" showIcon />
     );
   }
 
   if (!category) {
     return (
-      <Alert message="分类不存在" description="该分类不存在或已被删除" type="warning" showIcon />
+      <Alert title="分类不存在" description="该分类不存在或已被删除" type="warning" showIcon />
     );
   }
 
-  const articles = data?.articlesByCategory?.data || [];
+  const articles = data?.articles?.items || [];
 
   return (
     <div className="blog-category">
@@ -138,14 +143,12 @@ export function BlogCategoryPage() {
           </Paragraph>
         )}
         <div style={{ marginTop: '16px' }}>
-          <Tag color="blue">
-            {articles.length > 0 ? data?.articlesByCategory?.pagination.total : 0} 篇文章
-          </Tag>
+          <Tag color="blue">{articles.length > 0 ? data?.articles?.total : 0} 篇文章</Tag>
         </div>
       </div>
 
       {articles.length === 0 ? (
-        <Alert message="暂无文章" description="该分类下还没有发布任何文章" type="info" showIcon />
+        <Alert title="暂无文章" description="该分类下还没有发布任何文章" type="info" showIcon />
       ) : (
         <div>
           <List
@@ -185,7 +188,7 @@ export function BlogCategoryPage() {
                       WebkitBoxOrient: 'vertical',
                     }}
                   >
-                    {article.excerpt}
+                    {article.summary}
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span
@@ -206,19 +209,18 @@ export function BlogCategoryPage() {
             )}
           />
 
-          {data?.articlesByCategory?.pagination &&
-            data.articlesByCategory.pagination.totalPages > 1 && (
-              <div style={{ textAlign: 'center', marginTop: '32px' }}>
-                <Pagination
-                  current={currentPage}
-                  pageSize={10}
-                  total={data.articlesByCategory.pagination.total}
-                  onChange={handlePageChange}
-                  showSizeChanger={false}
-                  showTotal={(total) => `共 ${total} 篇文章`}
-                />
-              </div>
-            )}
+          {data?.articles?.pageInfo && data.articles.pageInfo.hasNext && (
+            <div style={{ textAlign: 'center', marginTop: '32px' }}>
+              <Pagination
+                current={currentPage}
+                pageSize={10}
+                total={data.articles.total}
+                onChange={handlePageChange}
+                showSizeChanger={false}
+                showTotal={(total) => `共 ${total} 篇文章`}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

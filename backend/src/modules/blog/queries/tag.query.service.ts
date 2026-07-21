@@ -43,4 +43,26 @@ export class TagQueryService {
       );
     }
   }
+
+  async getTagsByArticle(
+    articleId: string,
+    transactionContext?: PersistenceTransactionContext,
+  ): Promise<TagEntity[]> {
+    try {
+      return await this.tagRepository.getTagsByArticle(articleId, transactionContext);
+    } catch (error) {
+      if (error instanceof DomainError) {
+        throw error;
+      }
+      throw new DomainError(
+        BLOG_ERROR.QUERY_FAILED,
+        '获取文章标签失败',
+        {
+          articleId,
+          error: error instanceof Error ? error.message : '未知错误',
+        },
+        error,
+      );
+    }
+  }
 }

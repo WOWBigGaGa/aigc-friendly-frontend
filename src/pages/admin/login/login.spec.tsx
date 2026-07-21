@@ -190,9 +190,12 @@ describe('AdminLoginPage', () => {
 
   it('should successfully login with correct credentials', async () => {
     (executeGraphQL as ReturnType<typeof vi.fn>).mockResolvedValue({
-      adminLogin: {
-        token: 'mock_token',
-        user: { id: '1', username: 'admin', email: 'admin@example.com', roles: ['admin'] },
+      login: {
+        accessToken: 'mock_token',
+        refreshToken: 'mock_refresh_token',
+        accountId: 1,
+        role: 'ADMIN',
+        userInfo: { id: 1, accountId: 1, nickname: 'admin', email: 'admin@example.com', avatarUrl: '' },
       },
     });
 
@@ -216,7 +219,7 @@ describe('AdminLoginPage', () => {
         id: '1',
         username: 'admin',
         email: 'admin@example.com',
-        roles: ['admin'],
+        roles: ['ADMIN'],
       });
       expect(mockNavigate).toHaveBeenCalledWith('/admin/dashboard');
     });

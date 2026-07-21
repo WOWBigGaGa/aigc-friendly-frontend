@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -47,6 +47,12 @@ vi.mock('@ant-design/icons', () => ({
   PlusOutlined: () => <span data-testid="icon-plus" />,
 }));
 
+vi.mock('@/shared/graphql', () => ({
+  executeGraphQL: vi.fn(),
+}));
+
+import { executeGraphQL } from '@/shared/graphql';
+
 describe('AdminTagsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -58,6 +64,10 @@ describe('AdminTagsPage', () => {
   });
 
   it('should render tags page title', () => {
+    (executeGraphQL as ReturnType<typeof vi.fn>).mockResolvedValue({
+      tags: [],
+    });
+
     render(
       <MemoryRouter>
         <AdminTagsPage />
@@ -68,6 +78,10 @@ describe('AdminTagsPage', () => {
   });
 
   it('should render new tag button', () => {
+    (executeGraphQL as ReturnType<typeof vi.fn>).mockResolvedValue({
+      tags: [],
+    });
+
     render(
       <MemoryRouter>
         <AdminTagsPage />
@@ -78,6 +92,10 @@ describe('AdminTagsPage', () => {
   });
 
   it('should render tag table with columns', () => {
+    (executeGraphQL as ReturnType<typeof vi.fn>).mockResolvedValue({
+      tags: [],
+    });
+
     render(
       <MemoryRouter>
         <AdminTagsPage />
@@ -93,19 +111,40 @@ describe('AdminTagsPage', () => {
     expect(headers[3].textContent).toBe('操作');
   });
 
-  it('should render tag data rows', () => {
+  it('should render tag data rows', async () => {
+    (executeGraphQL as ReturnType<typeof vi.fn>).mockResolvedValue({
+      tags: [
+        {
+          id: '1',
+          name: 'React',
+          slug: 'react',
+          createdAt: '2024-01-01',
+          updatedAt: '2024-01-01',
+        },
+        {
+          id: '2',
+          name: 'TypeScript',
+          slug: 'typescript',
+          createdAt: '2024-01-01',
+          updatedAt: '2024-01-01',
+        },
+      ],
+    });
+
     render(
       <MemoryRouter>
         <AdminTagsPage />
       </MemoryRouter>,
     );
 
-    const table = screen.getByTestId('table');
-    const rows = table.querySelectorAll('tbody tr');
-    expect(rows.length).toBe(2);
+    await waitFor(() => {
+      const table = screen.getByTestId('table');
+      const rows = table.querySelectorAll('tbody tr');
+      expect(rows.length).toBe(2);
 
-    const names = table.querySelectorAll('tbody td:first-child');
-    expect(names[0].textContent).toBe('React');
-    expect(names[1].textContent).toBe('TypeScript');
+      const names = table.querySelectorAll('tbody td:first-child');
+      expect(names[0].textContent).toBe('React');
+      expect(names[1].textContent).toBe('TypeScript');
+    });
   });
 });

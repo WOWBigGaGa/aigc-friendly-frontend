@@ -1,10 +1,5 @@
-import { useEffect, useState } from 'react';
 import { GithubOutlined, LinkOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
-import { Alert, Avatar, Card, Spin, Tag, Typography } from 'antd';
-
-import { GET_BLOG_PROFILE } from '@/features/blog';
-
-import { executeGraphQL } from '@/shared/graphql';
+import { Avatar, Card, Tag, Typography } from 'antd';
 
 const { Title, Paragraph } = Typography;
 
@@ -18,11 +13,7 @@ interface BlogProfile {
   skills: Record<string, string[]>;
 }
 
-interface BlogProfileQueryResult {
-  blogProfile: BlogProfile | null;
-}
-
-const defaultProfile: BlogProfile = {
+const profile: BlogProfile = {
   name: 'YYan',
   avatar: null,
   bio: '热爱编程，专注于 Web 开发领域。拥有丰富的全栈开发经验，擅长使用 TypeScript、React、NestJS 等技术栈构建高质量的应用程序。喜欢分享技术心得，希望通过博客记录学习历程，帮助更多开发者成长。',
@@ -52,49 +43,6 @@ const skillCategoryLabels: Record<string, string> = {
 };
 
 export function BlogAboutPage() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [profile, setProfile] = useState<BlogProfile>(defaultProfile);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const queryBody = GET_BLOG_PROFILE.loc?.source?.body ?? '';
-        const result = await executeGraphQL<BlogProfileQueryResult, Record<string, never>>(
-          queryBody,
-          {},
-        );
-        if (result.blogProfile) {
-          setProfile(result.blogProfile);
-        }
-      } catch (err) {
-        console.error('Failed to fetch blog profile:', err);
-        setError(err as Error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, []);
-
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '40px' }}>
-        <Spin size="large" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert message="加载失败" description="个人信息加载失败，请稍后重试" type="error" showIcon />
-    );
-  }
-
   return (
     <div className="blog-about">
       <Card className="about-card">

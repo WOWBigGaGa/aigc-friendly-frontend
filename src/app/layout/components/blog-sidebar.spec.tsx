@@ -12,25 +12,25 @@ vi.mock('antd', async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,
-    Card: ({ children, bordered }: { children?: React.ReactNode; bordered?: boolean }) => (
-      <div data-testid="card" data-bordered={String(bordered)}>
+    Card: ({ children, variant }: { children?: React.ReactNode; variant?: string }) => (
+      <div data-testid="card" data-variant={String(variant)}>
         {children}
       </div>
     ),
     Alert: ({
-      message,
+      title,
       description,
       type,
       icon,
     }: {
-      message?: string;
+      title?: string;
       description?: string;
       type?: 'info';
       icon?: React.ReactNode;
     }) => (
       <div data-testid="alert" data-type={type}>
         {icon}
-        <span data-testid="alert-message">{message}</span>
+        <span data-testid="alert-message">{title}</span>
         {description && <span data-testid="alert-description">{description}</span>}
       </div>
     ),

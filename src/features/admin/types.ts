@@ -15,7 +15,6 @@ export interface ArticleItem {
   viewCount: number;
   likeCount: number;
   publishedAt: string | null;
-  category: { id: string; name: string } | null;
 }
 
 export interface ArticleView {
@@ -46,7 +45,6 @@ export interface Category {
 export interface CommentItem {
   id: string;
   articleId: string;
-  articleTitle?: string;
   authorName: string;
   authorEmail: string;
   content: string;

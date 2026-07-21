@@ -72,14 +72,6 @@ const articleColumns = [
     width: 250,
   },
   {
-    title: '分类',
-    dataIndex: 'category',
-    key: 'category',
-    render: (category: { name: string } | null) =>
-      category ? <Tag color="blue">{category.name}</Tag> : '-',
-    width: 100,
-  },
-  {
     title: '状态',
     dataIndex: 'status',
     key: 'status',
@@ -160,14 +152,14 @@ export function AdminDashboardPage() {
     try {
       const [statsResult, articlesResult, commentsResult] = await Promise.all([
         executeGraphQL<{ dashboardStats: DashboardStats }, {}>(ADMIN_DASHBOARD_STATS, {}),
-        executeGraphQL<{ articles: PaginatedResult<ArticleItem> }, { page: number; limit: number }>(
+        executeGraphQL<{ articles: PaginatedResult<ArticleItem> }, { page: number; pageSize: number }>(
           ADMIN_RECENT_ARTICLES,
-          { page: 1, limit: 5 },
+          { page: 1, pageSize: 5 },
         ),
         executeGraphQL<
           { pendingComments: PaginatedResult<CommentItem> },
-          { page: number; limit: number }
-        >(ADMIN_PENDING_COMMENTS, { page: 1, limit: 5 }),
+          { page: number; pageSize: number }
+        >(ADMIN_PENDING_COMMENTS, { page: 1, pageSize: 5 }),
       ]);
 
       setStats(statsResult.dashboardStats);

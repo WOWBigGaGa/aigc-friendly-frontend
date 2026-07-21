@@ -21,20 +21,20 @@ export class CommentQueryService {
     pagination: PaginationInput,
   ): Promise<PaginatedResult<CommentTreeNode>> {
     try {
-      const { page, limit } = pagination;
-      const result = await this.commentRepository.findApprovedByArticle(articleId, page, limit);
+      const { page, pageSize } = pagination;
+      const result = await this.commentRepository.findApprovedByArticle(articleId, page, pageSize);
 
       // 构建评论树
       const tree = this.buildCommentTree(result.items);
 
-      const totalPages = Math.ceil(result.total / limit);
+      const totalPages = Math.ceil(result.total / pageSize);
       const hasNext = page < totalPages;
 
       return {
         items: tree,
         total: result.total,
         page,
-        pageSize: limit,
+        pageSize,
         pageInfo: {
           hasNext,
         },
@@ -61,18 +61,18 @@ export class CommentQueryService {
    */
   async getPendingComments(pagination: PaginationInput): Promise<PaginatedResult<CommentView>> {
     try {
-      const { page, limit } = pagination;
-      const result = await this.commentRepository.findPendingComments(page, limit);
+      const { page, pageSize } = pagination;
+      const result = await this.commentRepository.findPendingComments(page, pageSize);
 
       const items = result.items.map((entity) => this.mapToView(entity));
-      const totalPages = Math.ceil(result.total / limit);
+      const totalPages = Math.ceil(result.total / pageSize);
       const hasNext = page < totalPages;
 
       return {
         items,
         total: result.total,
         page,
-        pageSize: limit,
+        pageSize,
         pageInfo: {
           hasNext,
         },
@@ -133,6 +133,43 @@ export class CommentQueryService {
         BLOG_ERROR.QUERY_FAILED,
         '统计评论总数失败',
         {
+          error: error instanceof Error ? error.message : '未知错误',
+        },
+        error,
+      );
+    }
+  }
+
+  /**
+   * 获取所有评论（管理后台用）
+   */
+  async getAllComments(pagination: PaginationInput): Promise<PaginatedResult<CommentView>> {
+    try {
+      const { page, pageSize } = pagination;
+      const result = await this.commentRepository.findAll(page, pageSize);
+
+      const items = result.items.map((entity) => this.mapToView(entity));
+      const totalPages = Math.ceil(result.total / pageSize);
+      const hasNext = page < totalPages;
+
+      return {
+        items,
+        total: result.total,
+        page,
+        pageSize,
+        pageInfo: {
+          hasNext,
+        },
+      };
+    } catch (error) {
+      if (error instanceof DomainError) {
+        throw error;
+      }
+      throw new DomainError(
+        BLOG_ERROR.QUERY_FAILED,
+        '获取评论列表失败',
+        {
+          pagination,
           error: error instanceof Error ? error.message : '未知错误',
         },
         error,

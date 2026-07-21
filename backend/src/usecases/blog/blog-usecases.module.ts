@@ -17,6 +17,7 @@ import { ApproveCommentUsecase } from './approve-comment.usecase';
 import { RejectCommentUsecase } from './reject-comment.usecase';
 import { DeleteFileUsecase } from './delete-file.usecase';
 import { UploadFileUsecase } from './upload-file.usecase';
+import { IncrementArticleCounterUsecase } from './increment-article-counter.usecase';
 
 @Module({
   imports: [BlogInstallerModule, FileStorageModule],
@@ -37,6 +38,7 @@ import { UploadFileUsecase } from './upload-file.usecase';
     RejectCommentUsecase,
     DeleteFileUsecase,
     UploadFileUsecase,
+    IncrementArticleCounterUsecase,
   ],
   exports: [
     CreateArticleUsecase,
@@ -55,6 +57,7 @@ import { UploadFileUsecase } from './upload-file.usecase';
     RejectCommentUsecase,
     DeleteFileUsecase,
     UploadFileUsecase,
+    IncrementArticleCounterUsecase,
   ],
 })
 export class BlogUsecasesModule {}

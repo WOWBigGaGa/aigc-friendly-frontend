@@ -13,9 +13,13 @@ import { CommentRepository } from './repositories/comment.repository';
 import { CategoryRepository } from './repositories/category.repository';
 import { TagRepository } from './repositories/tag.repository';
 import { FileRepository } from './repositories/file.repository';
+import { FriendLinkRepository } from './repositories/friend-link.repository';
 import { ArticleQueryService } from './queries/article.query.service';
 import { CommentQueryService } from './queries/comment.query.service';
+import { CategoryQueryService } from './queries/category.query.service';
+import { TagQueryService } from './queries/tag.query.service';
 import { FileQueryService } from './queries/file.query.service';
+import { FriendLinkQueryService } from './queries/friend-link.query.service';
 
 @Module({
   imports: [
@@ -36,9 +40,13 @@ import { FileQueryService } from './queries/file.query.service';
     CategoryRepository,
     TagRepository,
     FileRepository,
+    FriendLinkRepository,
     ArticleQueryService,
     CommentQueryService,
+    CategoryQueryService,
+    TagQueryService,
     FileQueryService,
+    FriendLinkQueryService,
   ],
   exports: [
     TypeOrmModule,
@@ -47,9 +55,13 @@ import { FileQueryService } from './queries/file.query.service';
     CategoryRepository,
     TagRepository,
     FileRepository,
+    FriendLinkRepository,
     ArticleQueryService,
     CommentQueryService,
+    CategoryQueryService,
+    TagQueryService,
     FileQueryService,
+    FriendLinkQueryService,
   ],
 })
 export class BlogModule {}

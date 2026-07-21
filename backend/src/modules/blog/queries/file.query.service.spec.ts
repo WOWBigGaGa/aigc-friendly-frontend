@@ -18,7 +18,7 @@ describe('FileQueryService', () => {
     uploadedBy: '1',
     createdAt: new Date('2026-07-20'),
     updatedAt: new Date('2026-07-20'),
-  } as FileEntity;
+  };
 
   beforeEach(async () => {
     fileRepository = {
@@ -82,7 +82,11 @@ describe('FileQueryService', () => {
 
       await service.getFiles(1, 10, mockTransactionContext);
 
-      expect(fileRepository.findAllWithPagination).toHaveBeenCalledWith(1, 10, mockTransactionContext);
+      expect(fileRepository.findAllWithPagination).toHaveBeenCalledWith(
+        1,
+        10,
+        mockTransactionContext,
+      );
     });
   });
 

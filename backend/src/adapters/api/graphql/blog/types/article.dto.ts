@@ -1,5 +1,7 @@
 import { Field, ID, ObjectType } from '@nestjs/graphql';
 import { ArticleStatus } from '@src/modules/blog/blog.types';
+import { CategoryDTO } from './category.dto';
+import { TagDTO } from './tag.dto';
 
 @ObjectType({ description: '文章' })
 export class ArticleDTO {
@@ -23,6 +25,12 @@ export class ArticleDTO {
 
   @Field(() => String, { nullable: true, description: '分类 ID' })
   categoryId!: string | null;
+
+  @Field(() => CategoryDTO, { nullable: true, description: '文章分类' })
+  category?: CategoryDTO | null;
+
+  @Field(() => [TagDTO], { description: '文章标签列表' })
+  tags?: TagDTO[];
 
   @Field({ description: '作者 ID' })
   authorId!: string;

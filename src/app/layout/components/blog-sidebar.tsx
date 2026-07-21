@@ -161,7 +161,7 @@ export function BlogSidebar({ isOpen }: BlogSidebarProps = {}) {
   return (
     <aside className={`blog-sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-section">
-        <Card bordered={false}>
+        <Card variant="borderless">
           <div style={{ textAlign: 'center' }}>
             <Avatar size={64} icon={<UserOutlined />} style={{ marginBottom: '12px' }} />
             <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600' }}>
@@ -182,9 +182,9 @@ export function BlogSidebar({ isOpen }: BlogSidebarProps = {}) {
       </div>
 
       <div className="sidebar-section">
-        <Card bordered={false}>
+        <Card variant="borderless">
           <Alert
-            message={announcement.title}
+            title={announcement.title}
             description={announcement.content}
             type="info"
             showIcon
@@ -195,7 +195,7 @@ export function BlogSidebar({ isOpen }: BlogSidebarProps = {}) {
       </div>
 
       <div className="sidebar-section">
-        <Card bordered={false}>
+        <Card variant="borderless">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
             <BookOutlined style={{ fontSize: '16px', color: 'var(--ant-color-primary)' }} />
             <h3 style={{ margin: '0', fontSize: '15px', fontWeight: '600' }}>分类</h3>
@@ -263,7 +263,7 @@ export function BlogSidebar({ isOpen }: BlogSidebarProps = {}) {
       </div>
 
       <div className="sidebar-section">
-        <Card bordered={false}>
+        <Card variant="borderless">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
             <TagOutlined style={{ fontSize: '16px', color: 'var(--ant-color-primary)' }} />
             <h3 style={{ margin: '0', fontSize: '15px', fontWeight: '600' }}>标签云</h3>
@@ -319,7 +319,7 @@ export function BlogSidebar({ isOpen }: BlogSidebarProps = {}) {
       </div>
 
       <div className="sidebar-section">
-        <Card bordered={false}>
+        <Card variant="borderless">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
             <CalendarOutlined style={{ fontSize: '16px', color: 'var(--ant-color-primary)' }} />
             <h3 style={{ margin: '0', fontSize: '15px', fontWeight: '600' }}>归档</h3>

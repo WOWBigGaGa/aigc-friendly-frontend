@@ -32,7 +32,9 @@ const getIntEnvWithDefault = (key: string, defaultValue: number): number => {
 export default registerAs('fileStorage', () => ({
   uploadDir: process.env.FILE_UPLOAD_DIR || './uploads',
   maxSizeBytes: getIntEnvWithDefault('FILE_MAX_SIZE_BYTES', 10 * 1024 * 1024),
-  allowedMimeTypes: (process.env.FILE_ALLOWED_MIME_TYPES || 'image/jpeg,image/png,image/gif,image/webp,image/svg+xml')
+  allowedMimeTypes: (
+    process.env.FILE_ALLOWED_MIME_TYPES || 'image/jpeg,image/png,image/gif,image/webp,image/svg+xml'
+  )
     .split(',')
     .map((t) => t.trim())
     .filter(Boolean),

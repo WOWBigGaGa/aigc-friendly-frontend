@@ -32,30 +32,30 @@ export class ArticleQueryService {
     pagination: PaginationInput,
   ): Promise<PaginatedResult<ArticleView>> {
     try {
-      const { page, limit } = pagination;
+      const { page, pageSize } = pagination;
       let result: { items: ArticleEntity[]; total: number };
 
       // 根据筛选条件选择查询方法
       if (filter.tagIds && filter.tagIds.length > 0) {
-        result = await this.articleRepository.findByTags(filter.tagIds, page, limit);
+        result = await this.articleRepository.findByTags(filter.tagIds, page, pageSize);
       } else if (filter.categoryId) {
-        result = await this.articleRepository.findByCategory(filter.categoryId, page, limit);
+        result = await this.articleRepository.findByCategory(filter.categoryId, page, pageSize);
       } else if (filter.keyword) {
-        result = await this.articleRepository.searchByKeyword(filter.keyword, page, limit);
+        result = await this.articleRepository.searchByKeyword(filter.keyword, page, pageSize);
       } else {
-        result = await this.articleRepository.findPublishedWithPagination(page, limit);
+        result = await this.articleRepository.findPublishedWithPagination(page, pageSize);
       }
 
       // 转换为视图
       const items = result.items.map((entity) => this.mapToView(entity));
-      const totalPages = Math.ceil(result.total / limit);
+      const totalPages = Math.ceil(result.total / pageSize);
       const hasNext = page < totalPages;
 
       return {
         items,
         total: result.total,
         page,
-        pageSize: limit,
+        pageSize,
         pageInfo: {
           hasNext,
         },
@@ -94,6 +94,48 @@ export class ArticleQueryService {
       throw new DomainError(
         BLOG_ERROR.QUERY_FAILED,
         '获取文章失败',
+        {
+          articleId: id,
+          error: error instanceof Error ? error.message : '未知错误',
+        },
+        error,
+      );
+    }
+  }
+
+  /**
+   * 获取相邻文章（前一篇和后一篇，仅限已发布文章）
+   */
+  async getAdjacentArticles(
+    id: string,
+    transactionContext?: PersistenceTransactionContext,
+  ): Promise<{ previous: ArticleView | null; next: ArticleView | null }> {
+    try {
+      const currentArticle = await this.articleRepository.findById(id, transactionContext);
+
+      if (!currentArticle || !currentArticle.publishedAt) {
+        return { previous: null, next: null };
+      }
+
+      const [previous, next] = await Promise.all([
+        this.articleRepository.findPreviousPublished(
+          currentArticle.publishedAt,
+          transactionContext,
+        ),
+        this.articleRepository.findNextPublished(currentArticle.publishedAt, transactionContext),
+      ]);
+
+      return {
+        previous: previous ? this.mapToView(previous) : null,
+        next: next ? this.mapToView(next) : null,
+      };
+    } catch (error) {
+      if (error instanceof DomainError) {
+        throw error;
+      }
+      throw new DomainError(
+        BLOG_ERROR.QUERY_FAILED,
+        '获取相邻文章失败',
         {
           articleId: id,
           error: error instanceof Error ? error.message : '未知错误',
@@ -165,50 +207,6 @@ export class ArticleQueryService {
         BLOG_ERROR.QUERY_FAILED,
         '获取分类统计失败',
         {
-          error: error instanceof Error ? error.message : '未知错误',
-        },
-        error,
-      );
-    }
-  }
-
-  /**
-   * 增加文章阅读量
-   */
-  async incrementViewCount(id: string): Promise<void> {
-    try {
-      await this.articleRepository.incrementViewCount(id);
-    } catch (error) {
-      if (error instanceof DomainError) {
-        throw error;
-      }
-      throw new DomainError(
-        BLOG_ERROR.UPDATE_FAILED,
-        '增加阅读量失败',
-        {
-          articleId: id,
-          error: error instanceof Error ? error.message : '未知错误',
-        },
-        error,
-      );
-    }
-  }
-
-  /**
-   * 增加文章点赞数
-   */
-  async incrementLikeCount(id: string): Promise<void> {
-    try {
-      await this.articleRepository.incrementLikeCount(id);
-    } catch (error) {
-      if (error instanceof DomainError) {
-        throw error;
-      }
-      throw new DomainError(
-        BLOG_ERROR.UPDATE_FAILED,
-        '增加点赞数失败',
-        {
-          articleId: id,
           error: error instanceof Error ? error.message : '未知错误',
         },
         error,

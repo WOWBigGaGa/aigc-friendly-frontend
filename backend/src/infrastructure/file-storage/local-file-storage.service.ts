@@ -14,7 +14,10 @@ export class LocalFileStorageService implements FileStorageService {
 
   constructor(private readonly configService: ConfigService) {
     this.uploadDir = this.configService.get<string>('fileStorage.uploadDir', './uploads');
-    this.maxSizeBytes = this.configService.get<number>('fileStorage.maxSizeBytes', 10 * 1024 * 1024);
+    this.maxSizeBytes = this.configService.get<number>(
+      'fileStorage.maxSizeBytes',
+      10 * 1024 * 1024,
+    );
     this.allowedMimeTypes = this.configService.get<string[]>('fileStorage.allowedMimeTypes', [
       'image/jpeg',
       'image/png',
@@ -62,9 +65,7 @@ export class LocalFileStorageService implements FileStorageService {
       });
     }
 
-    const url = this.baseUrl
-      ? `${this.baseUrl}/uploads/${storedName}`
-      : `/uploads/${storedName}`;
+    const url = this.baseUrl ? `${this.baseUrl}/uploads/${storedName}` : `/uploads/${storedName}`;
 
     return {
       storedName,

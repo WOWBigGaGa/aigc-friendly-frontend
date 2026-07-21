@@ -9,25 +9,23 @@ vi.mock('@/features/blog', () => ({
     loc: {
       source: {
         body: `
-          query GetArticlesByCategory($slug: String!, $page: Int, $pageSize: Int) {
-            articlesByCategory(slug: $slug, page: $page, pageSize: $pageSize) {
-              data {
+          query GetArticlesByCategory($pagination: PaginationInput, $categoryId: String!) {
+            articles(pagination: $pagination, filter: { categoryId: $categoryId }) {
+              items {
                 id
                 title
-                slug
-                excerpt
+                summary
+                coverImage
+                viewCount
+                likeCount
                 publishedAt
-                category {
-                  id
-                  name
-                  slug
-                }
+                createdAt
               }
-              pagination {
-                page
-                pageSize
-                total
-                totalPages
+              total
+              page
+              pageSize
+              pageInfo {
+                hasNext
               }
             }
           }
@@ -45,7 +43,9 @@ vi.mock('@/features/blog', () => ({
               name
               slug
               description
-              parentId
+              sort
+              createdAt
+              updatedAt
             }
           }
         `,
@@ -67,16 +67,16 @@ vi.mock('antd', async (importOriginal) => {
   return {
     ...actual,
     Alert: ({
-      message,
+      title,
       description,
       type,
     }: {
-      message?: React.ReactNode;
+      title?: React.ReactNode;
       description?: React.ReactNode;
       type?: string;
     }) => (
       <div data-testid="alert" data-type={type}>
-        <div data-testid="alert-message">{message}</div>
+        <div data-testid="alert-message">{title}</div>
         {description && <div data-testid="alert-description">{description}</div>}
       </div>
     ),
@@ -151,37 +151,33 @@ describe('BlogCategoryPage', () => {
           ],
   });
 
-  const mockArticlesByCategory = (slug: string, page: number) => ({
-    articlesByCategory: {
-      data:
+  const mockArticlesByCategory = (slug: string, page: number, hasNext = false) => ({
+    articles: {
+      items:
         slug === 'empty-category'
           ? []
           : [
               {
                 id: 'article-1',
                 title: 'Test Article',
-                slug: 'test-article',
-                excerpt: 'This is a test article.',
+                summary: 'This is a test article.',
+                coverImage: null,
+                viewCount: 10,
+                likeCount: 5,
                 publishedAt: '2024-01-15T00:00:00Z',
-                category: { id: 'cat-1', name: 'Technology', slug: 'technology' },
+                createdAt: '2024-01-15T00:00:00Z',
               },
             ],
-      pagination: {
-        page,
-        pageSize: 10,
-        total: slug === 'empty-category' ? 0 : 1,
-        totalPages: 1,
-      },
+      total: slug === 'empty-category' ? 0 : 1,
+      page,
+      pageSize: 10,
+      pageInfo: { hasNext },
     },
   });
 
   it('renders category name and description', async () => {
-    vi.mocked(executeGraphQL).mockImplementation(async () => {
-      return mockArticlesByCategory('technology', 1);
-    });
-
-    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticlesByCategory('technology', 1));
     vi.mocked(executeGraphQL).mockResolvedValueOnce(mockCategories('technology'));
+    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticlesByCategory('technology', 1));
 
     render(
       <MemoryRouter initialEntries={['/blog/category/technology']}>
@@ -200,8 +196,8 @@ describe('BlogCategoryPage', () => {
   });
 
   it('renders article list for category', async () => {
-    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticlesByCategory('technology', 1));
     vi.mocked(executeGraphQL).mockResolvedValueOnce(mockCategories('technology'));
+    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticlesByCategory('technology', 1));
 
     render(
       <MemoryRouter initialEntries={['/blog/category/technology']}>
@@ -220,10 +216,10 @@ describe('BlogCategoryPage', () => {
   });
 
   it('renders no articles message when category is empty', async () => {
-    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticlesByCategory('empty-category', 1));
     vi.mocked(executeGraphQL).mockResolvedValueOnce({
       categories: [{ id: 'cat-3', name: 'Empty', slug: 'empty-category', description: '' }],
     });
+    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticlesByCategory('empty-category', 1));
 
     render(
       <MemoryRouter initialEntries={['/blog/category/empty-category']}>
@@ -241,7 +237,6 @@ describe('BlogCategoryPage', () => {
   });
 
   it('renders not found message when category does not exist', async () => {
-    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticlesByCategory('invalid-category', 1));
     vi.mocked(executeGraphQL).mockResolvedValueOnce(mockCategories('invalid-category'));
 
     render(
@@ -282,7 +277,7 @@ describe('BlogCategoryPage', () => {
   it('renders loading state initially', () => {
     vi.mocked(executeGraphQL).mockImplementation(async () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
-      return mockArticlesByCategory('technology', 1);
+      return mockCategories('technology');
     });
 
     render(

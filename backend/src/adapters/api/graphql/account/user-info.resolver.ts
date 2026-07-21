@@ -6,6 +6,7 @@ import { UseGuards } from '@nestjs/common';
 import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { mapJwtToUsecaseSession, type UsecaseSession } from '@app-types/auth/session.types';
 import { JwtPayload } from '@app-types/jwt.types';
+import { ChangePasswordUsecase } from '@src/usecases/account/change-password.usecase';
 import { GetVisibleUserInfoUsecase } from '@src/usecases/account/get-visible-user-info.usecase';
 import {
   UpdateAccessGroupUsecase,
@@ -18,6 +19,8 @@ import { RolesGuard } from '../guards/roles.guard';
 import { BasicUserInfoDTO } from './dto/basic-user-info.dto';
 import { UserInfoDTO } from './dto/user-info.dto';
 import {
+  ChangePasswordInput,
+  ChangePasswordResult,
   UpdateAccessGroupInput,
   UpdateAccessGroupResult,
   UpdateUserInfoInput,
@@ -34,6 +37,7 @@ export class UserInfoResolver {
     private readonly getVisibleUserInfoUsecase: GetVisibleUserInfoUsecase,
     private readonly updateVisibleUserInfoUsecase: UpdateVisibleUserInfoUsecase,
     private readonly updateAccessGroupUsecase: UpdateAccessGroupUsecase,
+    private readonly changePasswordUsecase: ChangePasswordUsecase,
   ) {}
 
   /**
@@ -193,5 +197,19 @@ export class UserInfoResolver {
       identityHint: result.identityHint,
       isUpdated: result.isUpdated,
     };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => ChangePasswordResult, { name: 'changePassword' })
+  async changePassword(
+    @currentUser() user: JwtPayload,
+    @Args('input') input: ChangePasswordInput,
+  ): Promise<ChangePasswordResult> {
+    const session: UsecaseSession = mapJwtToUsecaseSession(user);
+    return await this.changePasswordUsecase.execute({
+      session,
+      oldPassword: input.oldPassword,
+      newPassword: input.newPassword,
+    });
   }
 }

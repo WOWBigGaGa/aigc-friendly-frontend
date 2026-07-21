@@ -1685,7 +1685,8 @@ describe('Blog Module (e2e)', () => {
       it('should search articles by content keyword', async () => {
         const article = await articleRepository.create({
           title: `${testPrefix}Content Search Test`,
-          content: '# Web Development\n\nThis article covers TypeScript programming and modern web frameworks.',
+          content:
+            '# Web Development\n\nThis article covers TypeScript programming and modern web frameworks.',
           summary: 'Web dev content',
           authorId: 'test-author-id',
           status: ArticleStatus.PUBLISHED,
@@ -1780,44 +1781,50 @@ describe('Blog Module (e2e)', () => {
         });
         seededCategoryIds.push(category2.id);
 
-        await articleRepository.create({
-          title: `${testPrefix}Category A Article 1`,
-          content: '# Category A',
-          summary: 'Category A article',
-          authorId: 'test-author-id',
-          status: ArticleStatus.PUBLISHED,
-          viewCount: 0,
-          likeCount: 0,
-          isPinned: false,
-          categoryId: category1.id,
-          publishedAt: new Date(),
-        }).then(a => seededArticleIds.push(a.id));
+        await articleRepository
+          .create({
+            title: `${testPrefix}Category A Article 1`,
+            content: '# Category A',
+            summary: 'Category A article',
+            authorId: 'test-author-id',
+            status: ArticleStatus.PUBLISHED,
+            viewCount: 0,
+            likeCount: 0,
+            isPinned: false,
+            categoryId: category1.id,
+            publishedAt: new Date(),
+          })
+          .then((a) => seededArticleIds.push(a.id));
 
-        await articleRepository.create({
-          title: `${testPrefix}Category A Article 2`,
-          content: '# Category A',
-          summary: 'Category A article',
-          authorId: 'test-author-id',
-          status: ArticleStatus.PUBLISHED,
-          viewCount: 0,
-          likeCount: 0,
-          isPinned: false,
-          categoryId: category1.id,
-          publishedAt: new Date(),
-        }).then(a => seededArticleIds.push(a.id));
+        await articleRepository
+          .create({
+            title: `${testPrefix}Category A Article 2`,
+            content: '# Category A',
+            summary: 'Category A article',
+            authorId: 'test-author-id',
+            status: ArticleStatus.PUBLISHED,
+            viewCount: 0,
+            likeCount: 0,
+            isPinned: false,
+            categoryId: category1.id,
+            publishedAt: new Date(),
+          })
+          .then((a) => seededArticleIds.push(a.id));
 
-        await articleRepository.create({
-          title: `${testPrefix}Category B Article`,
-          content: '# Category B',
-          summary: 'Category B article',
-          authorId: 'test-author-id',
-          status: ArticleStatus.PUBLISHED,
-          viewCount: 0,
-          likeCount: 0,
-          isPinned: false,
-          categoryId: category2.id,
-          publishedAt: new Date(),
-        }).then(a => seededArticleIds.push(a.id));
+        await articleRepository
+          .create({
+            title: `${testPrefix}Category B Article`,
+            content: '# Category B',
+            summary: 'Category B article',
+            authorId: 'test-author-id',
+            status: ArticleStatus.PUBLISHED,
+            viewCount: 0,
+            likeCount: 0,
+            isPinned: false,
+            categoryId: category2.id,
+            publishedAt: new Date(),
+          })
+          .then((a) => seededArticleIds.push(a.id));
 
         const response = await request(app.getHttpServer())
           .post('/graphql')
@@ -1901,29 +1908,33 @@ describe('Blog Module (e2e)', () => {
       });
 
       it('should filter by pinned articles', async () => {
-        await articleRepository.create({
-          title: `${testPrefix}Pinned Article`,
-          content: '# Pinned',
-          summary: 'Pinned article',
-          authorId: 'test-author-id',
-          status: ArticleStatus.PUBLISHED,
-          viewCount: 0,
-          likeCount: 0,
-          isPinned: true,
-          publishedAt: new Date(),
-        }).then(a => seededArticleIds.push(a.id));
+        await articleRepository
+          .create({
+            title: `${testPrefix}Pinned Article`,
+            content: '# Pinned',
+            summary: 'Pinned article',
+            authorId: 'test-author-id',
+            status: ArticleStatus.PUBLISHED,
+            viewCount: 0,
+            likeCount: 0,
+            isPinned: true,
+            publishedAt: new Date(),
+          })
+          .then((a) => seededArticleIds.push(a.id));
 
-        await articleRepository.create({
-          title: `${testPrefix}Normal Article`,
-          content: '# Normal',
-          summary: 'Normal article',
-          authorId: 'test-author-id',
-          status: ArticleStatus.PUBLISHED,
-          viewCount: 0,
-          likeCount: 0,
-          isPinned: false,
-          publishedAt: new Date(),
-        }).then(a => seededArticleIds.push(a.id));
+        await articleRepository
+          .create({
+            title: `${testPrefix}Normal Article`,
+            content: '# Normal',
+            summary: 'Normal article',
+            authorId: 'test-author-id',
+            status: ArticleStatus.PUBLISHED,
+            viewCount: 0,
+            likeCount: 0,
+            isPinned: false,
+            publishedAt: new Date(),
+          })
+          .then((a) => seededArticleIds.push(a.id));
 
         const response = await request(app.getHttpServer())
           .post('/graphql')
@@ -1956,43 +1967,49 @@ describe('Blog Module (e2e)', () => {
         });
         seededCategoryIds.push(category.id);
 
-        await articleRepository.create({
-          title: `${testPrefix}Combined Node.js`,
-          content: '# Node.js',
-          summary: 'Node.js in category',
-          authorId: 'test-author-id',
-          status: ArticleStatus.PUBLISHED,
-          viewCount: 0,
-          likeCount: 0,
-          isPinned: false,
-          categoryId: category.id,
-          publishedAt: new Date(),
-        }).then(a => seededArticleIds.push(a.id));
+        await articleRepository
+          .create({
+            title: `${testPrefix}Combined Node.js`,
+            content: '# Node.js',
+            summary: 'Node.js in category',
+            authorId: 'test-author-id',
+            status: ArticleStatus.PUBLISHED,
+            viewCount: 0,
+            likeCount: 0,
+            isPinned: false,
+            categoryId: category.id,
+            publishedAt: new Date(),
+          })
+          .then((a) => seededArticleIds.push(a.id));
 
-        await articleRepository.create({
-          title: `${testPrefix}Combined React`,
-          content: '# React',
-          summary: 'React in category',
-          authorId: 'test-author-id',
-          status: ArticleStatus.PUBLISHED,
-          viewCount: 0,
-          likeCount: 0,
-          isPinned: false,
-          categoryId: category.id,
-          publishedAt: new Date(),
-        }).then(a => seededArticleIds.push(a.id));
+        await articleRepository
+          .create({
+            title: `${testPrefix}Combined React`,
+            content: '# React',
+            summary: 'React in category',
+            authorId: 'test-author-id',
+            status: ArticleStatus.PUBLISHED,
+            viewCount: 0,
+            likeCount: 0,
+            isPinned: false,
+            categoryId: category.id,
+            publishedAt: new Date(),
+          })
+          .then((a) => seededArticleIds.push(a.id));
 
-        await articleRepository.create({
-          title: `${testPrefix}Combined Node.js Outside`,
-          content: '# Node.js',
-          summary: 'Node.js outside category',
-          authorId: 'test-author-id',
-          status: ArticleStatus.PUBLISHED,
-          viewCount: 0,
-          likeCount: 0,
-          isPinned: false,
-          publishedAt: new Date(),
-        }).then(a => seededArticleIds.push(a.id));
+        await articleRepository
+          .create({
+            title: `${testPrefix}Combined Node.js Outside`,
+            content: '# Node.js',
+            summary: 'Node.js outside category',
+            authorId: 'test-author-id',
+            status: ArticleStatus.PUBLISHED,
+            viewCount: 0,
+            likeCount: 0,
+            isPinned: false,
+            publishedAt: new Date(),
+          })
+          .then((a) => seededArticleIds.push(a.id));
 
         const response = await request(app.getHttpServer())
           .post('/graphql')

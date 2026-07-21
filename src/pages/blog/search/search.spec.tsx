@@ -9,25 +9,23 @@ vi.mock('@/features/blog', () => ({
     loc: {
       source: {
         body: `
-          query SearchArticles($keyword: String!, $page: Int, $pageSize: Int) {
-            searchArticles(keyword: $keyword, page: $page, pageSize: $pageSize) {
-              data {
+          query SearchArticles($pagination: PaginationInput, $keyword: String) {
+            articles(pagination: $pagination, filter: { keyword: $keyword }) {
+              items {
                 id
                 title
-                slug
-                excerpt
+                summary
+                coverImage
+                viewCount
+                likeCount
                 publishedAt
-                category {
-                  id
-                  name
-                  slug
-                }
+                createdAt
               }
-              pagination {
-                page
-                pageSize
-                total
-                totalPages
+              total
+              page
+              pageSize
+              pageInfo {
+                hasNext
               }
             }
           }
@@ -51,16 +49,16 @@ vi.mock('antd', async (importOriginal) => {
   return {
     ...actual,
     Alert: ({
-      message,
+      title,
       description,
       type,
     }: {
-      message?: React.ReactNode;
+      title?: React.ReactNode;
       description?: React.ReactNode;
       type?: string;
     }) => (
       <div data-testid="alert" data-type={type}>
-        <div data-testid="alert-message">{message}</div>
+        <div data-testid="alert-message">{title}</div>
         {description && <div data-testid="alert-description">{description}</div>}
       </div>
     ),
@@ -146,27 +144,27 @@ describe('BlogSearchPage', () => {
     cleanup();
   });
 
-  const mockSearchResult = (keyword: string, page: number) => ({
-    searchArticles: {
-      data:
+  const mockSearchResult = (keyword: string, page: number, hasNext = false) => ({
+    articles: {
+      items:
         keyword === 'empty'
           ? []
           : [
               {
                 id: 'article-1',
                 title: `Test ${keyword} Article`,
-                slug: 'test-article',
-                excerpt: `This is a ${keyword} test article excerpt.`,
+                summary: `This is a ${keyword} test article summary.`,
+                coverImage: null,
+                viewCount: 10,
+                likeCount: 5,
                 publishedAt: '2024-01-15T00:00:00Z',
-                category: { id: 'cat-1', name: 'Technology', slug: 'technology' },
+                createdAt: '2024-01-15T00:00:00Z',
               },
             ],
-      pagination: {
-        page,
-        pageSize: 10,
-        total: keyword === 'empty' ? 0 : 1,
-        totalPages: 1,
-      },
+      total: keyword === 'empty' ? 0 : 1,
+      page,
+      pageSize: 10,
+      pageInfo: { hasNext },
     },
   });
 
@@ -208,9 +206,8 @@ describe('BlogSearchPage', () => {
     });
 
     expect(executeGraphQL).toHaveBeenCalledWith(expect.any(String), {
+      pagination: { page: 1, pageSize: 10 },
       keyword: 'test',
-      page: 1,
-      pageSize: 10,
     });
   });
 
@@ -231,7 +228,6 @@ describe('BlogSearchPage', () => {
 
     expect(screen.getByText('Test')).toBeInTheDocument();
     expect(screen.getByTestId('article-item')).toHaveTextContent('This is a');
-    expect(screen.getByTestId('tag')).toHaveTextContent('Technology');
   });
 
   it('renders no results message when search returns empty', async () => {

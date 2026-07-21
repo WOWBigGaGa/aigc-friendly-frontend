@@ -5,9 +5,9 @@ describe('LegacyPasswordCryptoHelper', () => {
   it('应该使用 Node.js crypto 模块生成正确的哈希值', () => {
     // Arrange
     const password = 'guest';
-    const salt = new Date('2023-03-15T10:18:09Z').toString();
+    const salt = '2023-03-15 10:18:09';
     const expectedHash =
-      'c3e10d4a4af293057b42eb10bbf05f436b0a771f8269cb689f8a2b361fbd28d2c5abc547bef1aaf349299be5453a4e62cb6135479d15fa8434841e4528940620';
+      'd6c1297f5c0dfac11fe7e1893745c831b74dfbf98a9954cf15309818d5a2c089d02f7a036de13f028ff5ea7bf61c9215d5e1acc9030892628ed12d4a7141aa0d';
 
     // Act
     const actualHash = LegacyPasswordCryptoHelper.hashPasswordWithCrypto(password, salt);
@@ -20,9 +20,9 @@ describe('LegacyPasswordCryptoHelper', () => {
     it('应该正确验证使用 Node.js crypto 生成的密码', () => {
       // Arrange
       const password = 'guest';
-      const salt = new Date('2023-03-15T10:18:09Z').toString();
+      const salt = '2023-03-15 10:18:09';
       const hashedPassword =
-        'c3e10d4a4af293057b42eb10bbf05f436b0a771f8269cb689f8a2b361fbd28d2c5abc547bef1aaf349299be5453a4e62cb6135479d15fa8434841e4528940620';
+        'd6c1297f5c0dfac11fe7e1893745c831b74dfbf98a9954cf15309818d5a2c089d02f7a036de13f028ff5ea7bf61c9215d5e1acc9030892628ed12d4a7141aa0d';
 
       // Act
       const isValid = LegacyPasswordCryptoHelper.verifyPasswordWithCrypto(
@@ -40,7 +40,7 @@ describe('LegacyPasswordCryptoHelper', () => {
       const wrongPassword = 'wrongpassword';
       const salt = '2023-03-15 10:18:09';
       const hashedPassword =
-        'c3e10d4a4af293057b42eb10bbf05f436b0a771f8269cb689f8a2b361fbd28d2c5abc547bef1aaf349299be5453a4e62cb6135479d15fa8434841e4528940620';
+        'd6c1297f5c0dfac11fe7e1893745c831b74dfbf98a9954cf15309818d5a2c089d02f7a036de13f028ff5ea7bf61c9215d5e1acc9030892628ed12d4a7141aa0d';
 
       // Act
       const isValid = LegacyPasswordCryptoHelper.verifyPasswordWithCrypto(

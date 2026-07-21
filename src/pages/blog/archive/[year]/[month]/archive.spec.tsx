@@ -35,16 +35,16 @@ vi.mock('antd', async (importOriginal) => {
   return {
     ...actual,
     Alert: ({
-      message,
+      title,
       description,
       type,
     }: {
-      message?: React.ReactNode;
+      title?: React.ReactNode;
       description?: React.ReactNode;
       type?: string;
     }) => (
       <div data-testid="alert" data-type={type}>
-        <div data-testid="alert-message">{message}</div>
+        <div data-testid="alert-message">{title}</div>
         {description && <div data-testid="alert-description">{description}</div>}
       </div>
     ),
@@ -112,31 +112,31 @@ describe('BlogArchivePage', () => {
     ],
   });
 
-  const mockArticlesByDate = (year: number, month: number) => ({
+  const mockArticles = (empty = false, hasNext = false) => ({
     articles: {
-      data:
-        month === 0
-          ? []
-          : [
-              {
-                id: 'article-1',
-                title: 'Test Article',
-                slug: 'test-article',
-                excerpt: 'This is a test article.',
-                publishedAt: `${year}-${String(month).padStart(2, '0')}-15T00:00:00Z`,
-              },
-            ],
-      pagination: {
-        page: 1,
-        pageSize: 10,
-        total: month === 0 ? 0 : 1,
-        totalPages: 1,
-      },
+      items: empty
+        ? []
+        : [
+            {
+              id: 'article-1',
+              title: 'Test Article',
+              summary: 'This is a test article.',
+              coverImage: null,
+              viewCount: 10,
+              likeCount: 5,
+              publishedAt: '2024-01-15T00:00:00Z',
+              createdAt: '2024-01-15T00:00:00Z',
+            },
+          ],
+      total: empty ? 0 : 1,
+      page: 1,
+      pageSize: 10,
+      pageInfo: { hasNext },
     },
   });
 
   it('renders year and month in title', async () => {
-    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticlesByDate(2024, 1));
+    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticles());
     vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArchives());
 
     render(
@@ -155,7 +155,7 @@ describe('BlogArchivePage', () => {
   });
 
   it('renders archive directory buttons', async () => {
-    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticlesByDate(2024, 1));
+    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticles());
     vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArchives());
 
     render(
@@ -175,7 +175,7 @@ describe('BlogArchivePage', () => {
   });
 
   it('renders article list for specified date', async () => {
-    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticlesByDate(2024, 1));
+    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticles());
     vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArchives());
 
     render(
@@ -195,7 +195,7 @@ describe('BlogArchivePage', () => {
   });
 
   it('renders no articles message when no articles for date', async () => {
-    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticlesByDate(2024, 0));
+    vi.mocked(executeGraphQL).mockResolvedValueOnce(mockArticles(true));
     vi.mocked(executeGraphQL).mockResolvedValueOnce({
       archives: [{ year: 2024, month: 0, count: 0 }],
     });
@@ -237,7 +237,7 @@ describe('BlogArchivePage', () => {
   it('renders loading state initially', () => {
     vi.mocked(executeGraphQL).mockImplementation(async () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
-      return mockArticlesByDate(2024, 1);
+      return mockArticles();
     });
 
     render(
