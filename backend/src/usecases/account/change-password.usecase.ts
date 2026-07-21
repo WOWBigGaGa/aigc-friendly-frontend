@@ -1,6 +1,3 @@
-// src/usecases/account/change-password.usecase.ts
-
-import { type UsecaseSession } from '@app-types/auth/session.types';
 import { AUTH_ERROR, DomainError } from '@core/common/errors/domain-error';
 import { Inject, Injectable } from '@nestjs/common';
 import { AccountService } from '@src/modules/account/base/services/account.service';
@@ -8,17 +5,7 @@ import {
   TRANSACTION_RUNNER,
   type TransactionRunner,
 } from '@src/usecases/common/ports/transaction-runner.contract';
-
-export interface ChangePasswordParams {
-  session: UsecaseSession;
-  oldPassword: string;
-  newPassword: string;
-}
-
-export interface ChangePasswordResult {
-  success: boolean;
-  message?: string | null;
-}
+import { type ChangePasswordParams, type ChangePasswordResult } from './account.types';
 
 @Injectable()
 export class ChangePasswordUsecase {
@@ -61,15 +48,30 @@ export class ChangePasswordUsecase {
             transactionContext,
           });
 
-          return { success: true, message: null };
+          return { success: true, message: null, errorCode: null };
         },
       );
 
       return result;
     } catch (error) {
+      if (error instanceof DomainError) {
+        return {
+          success: false,
+          message: error.message,
+          errorCode: error.code,
+        };
+      }
+      if (error instanceof Error) {
+        return {
+          success: false,
+          message: error.message,
+          errorCode: null,
+        };
+      }
       return {
         success: false,
-        message: error instanceof Error ? error.message : '修改密码失败',
+        message: '修改密码失败',
+        errorCode: null,
       };
     }
   }

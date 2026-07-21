@@ -18,9 +18,8 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 import { BasicUserInfoDTO } from './dto/basic-user-info.dto';
 import { UserInfoDTO } from './dto/user-info.dto';
+import { ChangePasswordInput, ChangePasswordResult } from './dto/change-password.dto';
 import {
-  ChangePasswordInput,
-  ChangePasswordResult,
   UpdateAccessGroupInput,
   UpdateAccessGroupResult,
   UpdateUserInfoInput,
